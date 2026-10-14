@@ -28,7 +28,7 @@ export default function KnowledgeBaseInterviewSessionPage() {
     let cancelled = false;
     interviewApi
       .getSession(sessionId)
-      .then(session => {
+      .then((session) => {
         if (!cancelled && session.knowledgeBaseId) {
           setKbId(session.knowledgeBaseId);
         }
@@ -91,9 +91,7 @@ export default function KnowledgeBaseInterviewSessionPage() {
     ? `/knowledgebase-interview/${kbId}/questions`
     : '/knowledgebase-interview';
 
-  const historyTarget = kbId
-    ? `/knowledgebase-interview/${kbId}/interviews`
-    : '/interviews';
+  const historyTarget = kbId ? `/knowledgebase-interview/${kbId}/interviews` : '/interviews';
 
   if (awaitingEvaluation) {
     return (
@@ -110,7 +108,8 @@ export default function KnowledgeBaseInterviewSessionPage() {
               : '正在生成面试评估'}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            {evaluationError || '答案已全部保存，通常需要几十秒。评估完成后将自动打开本次面试结果。'}
+            {evaluationError ||
+              '答案已全部保存，通常需要几十秒。评估完成后将自动打开本次面试结果。'}
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <button

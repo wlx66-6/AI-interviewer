@@ -1,12 +1,20 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {AnimatePresence, motion} from 'framer-motion';
-import {CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import {historyApi} from '../api/history';
-import {interviewApi, type TextSessionMeta} from '../api/interview';
-import {voiceInterviewApi, SessionMeta} from '../api/voiceInterview';
-import {formatDate, formatDateOnly} from '../utils/date';
-import {getScoreProgressColor} from '../utils/score';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { historyApi } from '../api/history';
+import { interviewApi, type TextSessionMeta } from '../api/interview';
+import { voiceInterviewApi, SessionMeta } from '../api/voiceInterview';
+import { formatDate, formatDateOnly } from '../utils/date';
+import { getScoreProgressColor } from '../utils/score';
 import {
   calculateInterviewStats,
   getKnowledgeBaseInterviewCategoryLabel,
@@ -17,8 +25,8 @@ import {
   getVoiceEvaluationPresentation,
   shouldRefreshVoiceEvaluationPresentation,
 } from './voiceEvaluationStatus.ts';
-import {skillApi, type SkillDTO} from '../api/skill';
-import {getTemplateName} from '../utils/voiceInterview';
+import { skillApi, type SkillDTO } from '../api/skill';
+import { getTemplateName } from '../utils/voiceInterview';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import {
   AlertCircle,
@@ -104,14 +112,18 @@ function isVoiceEvaluationRetryable(item: UnifiedInterviewItem): boolean {
 }
 
 function StatusIcon({ item }: { item: UnifiedInterviewItem }) {
-  if (isEvaluateFailed(item)) return <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400"/>;
+  if (isEvaluateFailed(item))
+    return <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400" />;
   if (isVoiceEvaluationRetryable(item)) {
-    return <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400"/>;
+    return <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400" />;
   }
-  if (isEvaluating(item)) return <RefreshCw className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin"/>;
-  if (isEvaluateCompleted(item)) return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400"/>;
-  if (item.status === 'IN_PROGRESS') return <PlayCircle className="w-4 h-4 text-blue-500 dark:text-blue-400"/>;
-  return <Clock className="w-4 h-4 text-yellow-500 dark:text-yellow-400"/>;
+  if (isEvaluating(item))
+    return <RefreshCw className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" />;
+  if (isEvaluateCompleted(item))
+    return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />;
+  if (item.status === 'IN_PROGRESS')
+    return <PlayCircle className="w-4 h-4 text-blue-500 dark:text-blue-400" />;
+  return <Clock className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />;
 }
 
 function getStatusText(item: UnifiedInterviewItem): string {
@@ -160,7 +172,12 @@ function StatCard({
         <div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
           <p className="text-2xl font-bold text-slate-800 dark:text-white">
-            {value}{suffix && <span className="text-base font-normal text-slate-400 dark:text-slate-500 ml-1">{suffix}</span>}
+            {value}
+            {suffix && (
+              <span className="text-base font-normal text-slate-400 dark:text-slate-500 ml-1">
+                {suffix}
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -205,11 +222,16 @@ interface InterviewHistoryPageProps {
 function itemsEqual(a: UnifiedInterviewItem[], b: UnifiedInterviewItem[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    const ai = a[i], bi = b[i];
-    if (ai.id !== bi.id || ai.status !== bi.status ||
-        ai.evaluateStatus !== bi.evaluateStatus
-        || ai.evaluateStatusUpdatedAt !== bi.evaluateStatusUpdatedAt
-        || ai.overallScore !== bi.overallScore) return false;
+    const ai = a[i],
+      bi = b[i];
+    if (
+      ai.id !== bi.id ||
+      ai.status !== bi.status ||
+      ai.evaluateStatus !== bi.evaluateStatus ||
+      ai.evaluateStatusUpdatedAt !== bi.evaluateStatusUpdatedAt ||
+      ai.overallScore !== bi.overallScore
+    )
+      return false;
   }
   return true;
 }
@@ -223,7 +245,8 @@ export default function InterviewHistoryPage({
 }: InterviewHistoryPageProps) {
   const navigate = useNavigate();
   const knowledgeBaseFilterId = knowledgeBaseId ?? null;
-  const isKnowledgeBaseView = knowledgeBaseFilterId !== null && !Number.isNaN(knowledgeBaseFilterId);
+  const isKnowledgeBaseView =
+    knowledgeBaseFilterId !== null && !Number.isNaN(knowledgeBaseFilterId);
   const [items, setItems] = useState<UnifiedInterviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -239,7 +262,8 @@ export default function InterviewHistoryPage({
   const skillsRef = useRef<SkillDTO[]>([]);
   const skillsLoadedRef = useRef(false);
 
-  const hasActiveKbFilters = categoryFilter !== 'all' || timeFilter !== 'all' || completionFilter !== 'all';
+  const hasActiveKbFilters =
+    categoryFilter !== 'all' || timeFilter !== 'all' || completionFilter !== 'all';
 
   const resetKbFilters = () => {
     setCategoryFilter('all');
@@ -247,42 +271,46 @@ export default function InterviewHistoryPage({
     setCompletionFilter('all');
   };
 
-  const loadAll = useCallback(async (isPolling = false) => {
-    if (!isPolling) setLoading(true);
+  const loadAll = useCallback(
+    async (isPolling = false) => {
+      if (!isPolling) setLoading(true);
 
-    try {
-      // Only fetch skills on first load; reuse cached ref on polling
-      if (!skillsLoadedRef.current) {
-        skillsRef.current = await skillApi.listSkills().catch(() => [] as SkillDTO[]);
-        skillsLoadedRef.current = true;
+      try {
+        // Only fetch skills on first load; reuse cached ref on polling
+        if (!skillsLoadedRef.current) {
+          skillsRef.current = await skillApi.listSkills().catch(() => [] as SkillDTO[]);
+          skillsLoadedRef.current = true;
+        }
+        const loadedSkills = skillsRef.current;
+        const textInterviews = await loadTextInterviews(loadedSkills);
+        const scopedTextInterviews = isKnowledgeBaseView
+          ? textInterviews.filter((item) => item.knowledgeBaseId === knowledgeBaseFilterId)
+          : textInterviews.filter((item) => item.sourceType !== 'KNOWLEDGE_BASE');
+        const voiceSessions = isKnowledgeBaseView ? [] : await loadVoiceInterviews();
+
+        const voiceWithNames = voiceSessions.map((item) => {
+          const skillName = getTemplateName(item.title, loadedSkills);
+          return skillName !== item.title ? { ...item, title: skillName } : item;
+        });
+
+        const all = [...scopedTextInterviews, ...voiceWithNames];
+        all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setItems((prev) => {
+          const hasActiveEvaluation = all.some((item) =>
+            shouldRefreshVoiceEvaluationPresentation(item.evaluateStatus),
+          );
+          if (isPolling && itemsEqual(prev, all) && !hasActiveEvaluation) return prev;
+          return all;
+        });
+      } catch (err) {
+        console.error('加载面试记录失败', err);
+      } finally {
+        if (!isPolling) setLoading(false);
       }
-      const loadedSkills = skillsRef.current;
-      const textInterviews = await loadTextInterviews(loadedSkills);
-      const scopedTextInterviews = isKnowledgeBaseView
-        ? textInterviews.filter(item => item.knowledgeBaseId === knowledgeBaseFilterId)
-        : textInterviews.filter(item => item.sourceType !== 'KNOWLEDGE_BASE');
-      const voiceSessions = isKnowledgeBaseView ? [] : await loadVoiceInterviews();
-
-      const voiceWithNames = voiceSessions.map(item => {
-        const skillName = getTemplateName(item.title, loadedSkills);
-        return skillName !== item.title ? { ...item, title: skillName } : item;
-      });
-
-      const all = [...scopedTextInterviews, ...voiceWithNames];
-      all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      setItems(prev => {
-        const hasActiveEvaluation = all.some(item =>
-          shouldRefreshVoiceEvaluationPresentation(item.evaluateStatus));
-        if (isPolling && itemsEqual(prev, all) && !hasActiveEvaluation) return prev;
-        return all;
-      });
-    } catch (err) {
-      console.error('加载面试记录失败', err);
-    } finally {
-      if (!isPolling) setLoading(false);
-    }
-  }, [isKnowledgeBaseView, knowledgeBaseFilterId]);
+    },
+    [isKnowledgeBaseView, knowledgeBaseFilterId],
+  );
 
   // Load text interviews from dedicated API
   async function loadTextInterviews(skills: SkillDTO[]): Promise<UnifiedInterviewItem[]> {
@@ -292,9 +320,10 @@ export default function InterviewHistoryPage({
         id: session.sessionId,
         type: 'text' as const,
         sourceType: session.sourceType,
-        title: session.sourceType === 'KNOWLEDGE_BASE'
-          ? `${getTemplateName(session.skillId, skills)} · 知识库面试`
-          : getTemplateName(session.skillId, skills),
+        title:
+          session.sourceType === 'KNOWLEDGE_BASE'
+            ? `${getTemplateName(session.skillId, skills)} · 知识库面试`
+            : getTemplateName(session.skillId, skills),
         sessionId: session.sessionId,
         status: session.status,
         evaluateStatus: session.evaluateStatus ?? undefined,
@@ -340,7 +369,7 @@ export default function InterviewHistoryPage({
 
   // Polling for evaluation status
   useEffect(() => {
-    const hasEvaluating = items.some(i => isEvaluating(i));
+    const hasEvaluating = items.some((i) => isEvaluating(i));
 
     if (hasEvaluating && !pollingRef.current) {
       pollingRef.current = window.setInterval(() => loadAll(true), 3000);
@@ -413,10 +442,7 @@ export default function InterviewHistoryPage({
     }
   };
 
-  const handleRetryVoiceEvaluation = async (
-    item: UnifiedInterviewItem,
-    e: React.MouseEvent,
-  ) => {
+  const handleRetryVoiceEvaluation = async (item: UnifiedInterviewItem, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!item.voiceSessionId) return;
 
@@ -432,32 +458,48 @@ export default function InterviewHistoryPage({
   };
 
   // Filter + search（知识库视图额外支持方向 / 时间范围 / 完成状态筛选，条件之间为 AND 关系）
-  const filtered = useMemo(() => items.filter(item => {
-    if (typeFilter !== 'all' && item.type !== typeFilter) return false;
-    if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    if (isKnowledgeBaseView) {
-      if (categoryFilter === ALL_DIRECTIONS_VALUE && item.interviewCategory) return false;
-      if (categoryFilter !== 'all'
-          && categoryFilter !== ALL_DIRECTIONS_VALUE
-          && item.interviewCategory !== categoryFilter) return false;
-      if (timeFilter !== 'all') {
-        const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
-        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-        if (new Date(item.createdAt).getTime() < cutoff) return false;
-      }
-      if (completionFilter !== 'all') {
-        const completed = isEvaluateCompleted(item);
-        if (completionFilter === 'completed' && !completed) return false;
-        if (completionFilter === 'inProgress' && completed) return false;
-      }
-    }
-    return true;
-  }), [items, typeFilter, searchTerm, isKnowledgeBaseView, categoryFilter, timeFilter, completionFilter]);
+  const filtered = useMemo(
+    () =>
+      items.filter((item) => {
+        if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+        if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase()))
+          return false;
+        if (isKnowledgeBaseView) {
+          if (categoryFilter === ALL_DIRECTIONS_VALUE && item.interviewCategory) return false;
+          if (
+            categoryFilter !== 'all' &&
+            categoryFilter !== ALL_DIRECTIONS_VALUE &&
+            item.interviewCategory !== categoryFilter
+          )
+            return false;
+          if (timeFilter !== 'all') {
+            const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
+            const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+            if (new Date(item.createdAt).getTime() < cutoff) return false;
+          }
+          if (completionFilter !== 'all') {
+            const completed = isEvaluateCompleted(item);
+            if (completionFilter === 'completed' && !completed) return false;
+            if (completionFilter === 'inProgress' && completed) return false;
+          }
+        }
+        return true;
+      }),
+    [
+      items,
+      typeFilter,
+      searchTerm,
+      isKnowledgeBaseView,
+      categoryFilter,
+      timeFilter,
+      completionFilter,
+    ],
+  );
 
   const categoryOptions = useMemo(() => {
     const values = new Set<string>();
     let hasUncategorized = false;
-    items.forEach(item => {
+    items.forEach((item) => {
       if (item.interviewCategory) {
         values.add(item.interviewCategory);
       } else {
@@ -478,8 +520,8 @@ export default function InterviewHistoryPage({
 
   const trendData = useMemo(() => {
     return filtered
-      .filter(item => isEvaluateCompleted(item) && item.overallScore !== null)
-      .map(item => ({
+      .filter((item) => isEvaluateCompleted(item) && item.overallScore !== null)
+      .map((item) => ({
         name: formatDateOnly(item.createdAt),
         score: item.overallScore || 0,
       }))
@@ -487,7 +529,8 @@ export default function InterviewHistoryPage({
   }, [filtered]);
 
   // 筛选无结果（仅知识库视图且存在生效筛选条件时）与原始空状态区分开
-  const showFilterEmpty = isKnowledgeBaseView && hasActiveKbFilters && items.length > 0 && filtered.length === 0;
+  const showFilterEmpty =
+    isKnowledgeBaseView && hasActiveKbFilters && items.length > 0 && filtered.length === 0;
   const showOriginalEmpty = filtered.length === 0 && !showFilterEmpty;
 
   return (
@@ -509,7 +552,9 @@ export default function InterviewHistoryPage({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            {isKnowledgeBaseView ? '查看当前知识库的面试记录和表现趋势' : '查看和管理所有模拟面试记录'}
+            {isKnowledgeBaseView
+              ? '查看当前知识库的面试记录和表现趋势'
+              : '查看和管理所有模拟面试记录'}
           </motion.p>
         </div>
 
@@ -533,8 +578,19 @@ export default function InterviewHistoryPage({
       {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard icon={Users} label="面试总数" value={stats.totalCount} color="bg-primary-500" />
-          <StatCard icon={CheckCircle} label="已完成" value={stats.completedCount} color="bg-emerald-500" />
-          <StatCard icon={TrendingUp} label="平均分数" value={stats.averageScore} suffix="分" color="bg-indigo-500" />
+          <StatCard
+            icon={CheckCircle}
+            label="已完成"
+            value={stats.completedCount}
+            color="bg-emerald-500"
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="平均分数"
+            value={stats.averageScore}
+            suffix="分"
+            color="bg-indigo-500"
+          />
         </div>
       )}
 
@@ -549,14 +605,30 @@ export default function InterviewHistoryPage({
               <TrendingUp className="w-5 h-5 text-primary-500" />
               <span className="font-semibold text-slate-800 dark:text-white">面试表现趋势</span>
             </div>
-            <span className="text-sm text-slate-500 dark:text-slate-400">共 {trendData.length} 场练习</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              共 {trendData.length} 场练习
+            </span>
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  className="dark:stroke-slate-700"
+                />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                />
                 <Tooltip formatter={(value) => [`${value} 分`, '得分']} />
                 <Line
                   type="monotone"
@@ -587,8 +659,10 @@ export default function InterviewHistoryPage({
             className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary-500 transition-colors cursor-pointer"
           >
             <option value="all">全部记录</option>
-            {categoryOptions.values.map(category => (
-              <option key={category} value={category}>{category}</option>
+            {categoryOptions.values.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
             ))}
             {categoryOptions.hasUncategorized && (
               <option value={ALL_DIRECTIONS_VALUE}>{ALL_DIRECTIONS_LABEL}</option>
@@ -601,7 +675,9 @@ export default function InterviewHistoryPage({
             className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary-500 transition-colors cursor-pointer"
           >
             {TIME_RANGE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <select
@@ -611,7 +687,9 @@ export default function InterviewHistoryPage({
             className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-primary-500 transition-colors cursor-pointer"
           >
             {COMPLETION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           {hasActiveKbFilters && (
@@ -627,25 +705,29 @@ export default function InterviewHistoryPage({
       )}
 
       {/* Type filter tabs */}
-      {!isKnowledgeBaseView && <div className="flex items-center gap-2 mb-6">
-        {([
-          { key: 'all', label: '全部' },
-          { key: 'text', label: '文字面试' },
-          { key: 'voice', label: '语音面试' },
-        ] as const).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setTypeFilter(tab.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              typeFilter === tab.key
-                ? 'bg-primary-500 text-white'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>}
+      {!isKnowledgeBaseView && (
+        <div className="flex items-center gap-2 mb-6">
+          {(
+            [
+              { key: 'all', label: '全部' },
+              { key: 'text', label: '文字面试' },
+              { key: 'voice', label: '语音面试' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setTypeFilter(tab.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                typeFilter === tab.key
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -662,8 +744,12 @@ export default function InterviewHistoryPage({
           animate={{ opacity: 1, scale: 1 }}
         >
           <Search className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">没有符合当前筛选条件的面试记录</h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">可以尝试调整面试方向、时间范围或完成状态</p>
+          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            没有符合当前筛选条件的面试记录
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            可以尝试调整面试方向、时间范围或完成状态
+          </p>
           <button
             onClick={resetKbFilters}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
@@ -682,9 +768,13 @@ export default function InterviewHistoryPage({
           animate={{ opacity: 1, scale: 1 }}
         >
           <Users className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">暂无面试记录</h3>
+          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            暂无面试记录
+          </h3>
           <p className="text-slate-500 dark:text-slate-400">
-            {isKnowledgeBaseView ? '开始一次知识库面试后，记录将显示在这里' : '开始一次模拟面试后，记录将显示在这里'}
+            {isKnowledgeBaseView
+              ? '开始一次知识库面试后，记录将显示在这里'
+              : '开始一次模拟面试后，记录将显示在这里'}
           </p>
         </motion.div>
       )}
@@ -700,13 +790,27 @@ export default function InterviewHistoryPage({
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-600">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">类型</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">名称</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">状态</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">得分</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">详情</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">时间</th>
-                <th className="text-right px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">操作</th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  类型
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  名称
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  状态
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  得分
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  详情
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  时间
+                </th>
+                <th className="text-right px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  操作
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -732,7 +836,9 @@ export default function InterviewHistoryPage({
                         )}
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium text-slate-800 dark:text-white">{item.title}</p>
+                            <p className="font-medium text-slate-800 dark:text-white">
+                              {item.title}
+                            </p>
                             {isKnowledgeBaseView && item.type === 'text' && (
                               <span
                                 className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded text-xs font-medium"
@@ -743,14 +849,18 @@ export default function InterviewHistoryPage({
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">#{item.id.slice(-8)}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                            #{item.id.slice(-8)}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <StatusIcon item={item} />
-                        <span className="text-sm text-slate-600 dark:text-slate-300">{getStatusText(item)}</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">
+                          {getStatusText(item)}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -764,10 +874,14 @@ export default function InterviewHistoryPage({
                               transition={{ duration: 0.8, delay: index * 0.05 }}
                             />
                           </div>
-                          <span className="font-bold text-slate-800 dark:text-white">{item.overallScore}</span>
+                          <span className="font-bold text-slate-800 dark:text-white">
+                            {item.overallScore}
+                          </span>
                         </div>
                       ) : isVoiceEvaluationRetryable(item) ? (
-                        <span className="text-amber-600 dark:text-amber-400 text-sm">可重新生成</span>
+                        <span className="text-amber-600 dark:text-amber-400 text-sm">
+                          可重新生成
+                        </span>
                       ) : isEvaluating(item) ? (
                         <span className="text-blue-500 dark:text-blue-400 text-sm">生成中...</span>
                       ) : isEvaluateFailed(item) ? (
@@ -794,33 +908,43 @@ export default function InterviewHistoryPage({
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {item.type === 'text' && !isCompletedStatus(item.status) && !isEvaluateCompleted(item) && onContinueInterview && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (item.sourceType === 'KNOWLEDGE_BASE') {
-                                navigate(`/knowledgebase-interview/${item.sessionId}`, {
-                                  state: { knowledgeBaseId: item.knowledgeBaseId },
+                        {item.type === 'text' &&
+                          !isCompletedStatus(item.status) &&
+                          !isEvaluateCompleted(item) &&
+                          onContinueInterview && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.sourceType === 'KNOWLEDGE_BASE') {
+                                  navigate(`/knowledgebase-interview/${item.sessionId}`, {
+                                    state: { knowledgeBaseId: item.knowledgeBaseId },
+                                  });
+                                } else {
+                                  onContinueInterview(item.sessionId);
+                                }
+                              }}
+                              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                              title="继续面试"
+                            >
+                              <PlayCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                        {item.type === 'voice' &&
+                          isLiveStatus(item.status) &&
+                          item.voiceSessionId && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/voice-interview', {
+                                  state: { voiceSessionId: item.voiceSessionId },
                                 });
-                              } else {
-                                onContinueInterview(item.sessionId);
-                              }
-                            }}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                            title="继续面试"
-                          >
-                            <PlayCircle className="w-4 h-4" />
-                          </button>
-                        )}
-                        {item.type === 'voice' && isLiveStatus(item.status) && item.voiceSessionId && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); navigate('/voice-interview', { state: { voiceSessionId: item.voiceSessionId } }); }}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                            title="继续面试"
-                          >
-                            <PlayCircle className="w-4 h-4" />
-                          </button>
-                        )}
+                              }}
+                              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                              title="继续面试"
+                            >
+                              <PlayCircle className="w-4 h-4" />
+                            </button>
+                          )}
                         {isEvaluateCompleted(item) && item.type === 'text' && (
                           <button
                             onClick={(e) => handleExport(item.sessionId, e)}
@@ -835,15 +959,21 @@ export default function InterviewHistoryPage({
                             )}
                           </button>
                         )}
-                        {isEvaluateCompleted(item) && item.type === 'text' && item.resumeId && onRestartInterview && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onRestartInterview(item.resumeId!); }}
-                            className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
-                            title="重新面试"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </button>
-                        )}
+                        {isEvaluateCompleted(item) &&
+                          item.type === 'text' &&
+                          item.resumeId &&
+                          onRestartInterview && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRestartInterview(item.resumeId!);
+                              }}
+                              className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+                              title="重新面试"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
                         {isVoiceEvaluationRetryable(item) && item.voiceSessionId && (
                           <button
                             onClick={(e) => handleRetryVoiceEvaluation(item, e)}
@@ -859,14 +989,14 @@ export default function InterviewHistoryPage({
                           </button>
                         )}
                         <button
-                            onClick={(e) => handleDeleteClick(item, e)}
-                            disabled={deletingSessionId === item.sessionId}
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                            title="删除"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all"/>
+                          onClick={(e) => handleDeleteClick(item, e)}
+                          disabled={deletingSessionId === item.sessionId}
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                          title="删除"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
                       </div>
                     </td>
                   </motion.tr>

@@ -7,7 +7,7 @@ const NEXT_USER_SUBTITLE = '当前这一轮我会使用唯一索引保证幂等�
 
 test.describe('语音面试', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('https://cdn.jsdelivr.net/**', route => route.abort());
+    await page.route('https://cdn.jsdelivr.net/**', (route) => route.abort());
 
     await page.addInitScript(() => {
       type SocketMessage = {
@@ -33,8 +33,9 @@ test.describe('语音面试', () => {
 
         constructor(_url: string) {
           super();
-          (window as Window & { __voiceTestReceive?: (payload: unknown) => void })
-            .__voiceTestReceive = payload => this.receive(payload);
+          (
+            window as Window & { __voiceTestReceive?: (payload: unknown) => void }
+          ).__voiceTestReceive = (payload) => this.receive(payload);
           window.setTimeout(() => {
             this.readyState = FakeWebSocket.OPEN;
             this.onopen?.(new Event('open'));
@@ -44,8 +45,9 @@ test.describe('语音面试', () => {
 
         send(payload: string) {
           const message = JSON.parse(payload) as SocketMessage;
-          const sent = ((window as Window & { __voiceTestSentMessages?: SocketMessage[] })
-            .__voiceTestSentMessages ??= []);
+          const sent = ((
+            window as Window & { __voiceTestSentMessages?: SocketMessage[] }
+          ).__voiceTestSentMessages ??= []);
           sent.push(message);
 
           if (message.type === 'audio') {
@@ -84,17 +86,26 @@ test.describe('语音面试', () => {
       };
     });
 
-    await page.route('**/api/interview/skills', async route => {
+    await page.route('**/api/interview/skills', async (route) => {
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({
           code: 200,
           message: 'success',
-          data: [{ id: 'java-backend', name: 'Java 后端', description: '', categories: [], isPreset: true, sourceJd: null }],
+          data: [
+            {
+              id: 'java-backend',
+              name: 'Java 后端',
+              description: '',
+              categories: [],
+              isPreset: true,
+              sourceJd: null,
+            },
+          ],
         }),
       });
     });
-    await page.route('**/api/voice-interview/sessions', async route => {
+    await page.route('**/api/voice-interview/sessions', async (route) => {
       if (route.request().method() !== 'POST') return route.fallback();
       await route.fulfill({
         contentType: 'application/json',
@@ -113,8 +124,11 @@ test.describe('语音面试', () => {
         }),
       });
     });
-    await page.route(`**/api/voice-interview/sessions/${SESSION_ID}/end`, async route => {
-      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ code: 200, message: 'success', data: {} }) });
+    await page.route(`**/api/voice-interview/sessions/${SESSION_ID}/end`, async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 200, message: 'success', data: {} }),
+      });
     });
   });
 
@@ -129,10 +143,16 @@ test.describe('语音面试', () => {
     await page.getByTestId('voice-submit-answer').click();
     await expect(page.getByTestId('voice-current-ai-text')).toHaveText(AI_FOLLOW_UP);
 
-    await expect.poll(async () => page.evaluate(() =>
-      (window as Window & { __voiceTestSentMessages?: { type: string }[] }).__voiceTestSentMessages
-        ?.some(message => message.type === 'audio') ?? false,
-    )).toBe(true);
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          () =>
+            (
+              window as Window & { __voiceTestSentMessages?: { type: string }[] }
+            ).__voiceTestSentMessages?.some((message) => message.type === 'audio') ?? false,
+        ),
+      )
+      .toBe(true);
   });
 
   test('提交后迟到的上一轮字幕不会污染下一轮回答', async ({ page }) => {
@@ -146,28 +166,45 @@ test.describe('语音面试', () => {
     await page.getByTestId('voice-submit-answer').click();
     await expect(page.getByTestId('voice-current-ai-text')).toHaveText(AI_FOLLOW_UP);
     await page.evaluate((lateText) => {
-      (window as Window & { __voiceTestReceive?: (payload: unknown) => void })
-        .__voiceTestReceive?.({ type: 'subtitle', text: lateText, isFinal: false });
+      (window as Window & { __voiceTestReceive?: (payload: unknown) => void }).__voiceTestReceive?.(
+        { type: 'subtitle', text: lateText, isFinal: false },
+      );
     }, USER_SUBTITLE);
 
     await expect(page.getByTestId('voice-current-ai-text')).not.toBeVisible({ timeout: 5_000 });
     await expect(page.getByTestId('voice-current-user-text')).not.toBeVisible();
 
     await page.evaluate((nextText) => {
-      (window as Window & { __voiceTestReceive?: (payload: unknown) => void })
-        .__voiceTestReceive?.({ type: 'subtitle', text: nextText, isFinal: false });
+      (window as Window & { __voiceTestReceive?: (payload: unknown) => void }).__voiceTestReceive?.(
+        { type: 'subtitle', text: nextText, isFinal: false },
+      );
     }, NEXT_USER_SUBTITLE);
     await expect(page.getByTestId('voice-current-user-text')).toHaveText(NEXT_USER_SUBTITLE);
     await expect(page.getByTestId('voice-submit-answer')).toBeEnabled();
     await page.getByTestId('voice-submit-answer').click();
 
-    await expect.poll(async () => page.evaluate((nextText) =>
-      (window as Window & {
-        __voiceTestSentMessages?: { type: string; action?: string; data?: { text?: string } }[];
-      }).__voiceTestSentMessages?.some(message =>
-        message.type === 'control' && message.action === 'submit' && message.data?.text === nextText
-      ) ?? false,
-    NEXT_USER_SUBTITLE)).toBe(true);
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          (nextText) =>
+            (
+              window as Window & {
+                __voiceTestSentMessages?: {
+                  type: string;
+                  action?: string;
+                  data?: { text?: string };
+                }[];
+              }
+            ).__voiceTestSentMessages?.some(
+              (message) =>
+                message.type === 'control' &&
+                message.action === 'submit' &&
+                message.data?.text === nextText,
+            ) ?? false,
+          NEXT_USER_SUBTITLE,
+        ),
+      )
+      .toBe(true);
   });
 
   test('结束面试后返回面试记录页', async ({ page }) => {

@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  Database,
-  Layers,
-  Loader2,
-  Settings2,
-  Sparkles,
-} from 'lucide-react';
+import { Database, Layers, Loader2, Settings2, Sparkles } from 'lucide-react';
 import {
   knowledgeBaseApi,
   type KnowledgeBaseItem,
@@ -31,7 +25,7 @@ function reduceStats(questions: KnowledgeBaseQuestion[]): KbStats {
       else if (q.status === 'ARCHIVED') acc.archived += 1;
       return acc;
     },
-    { ...EMPTY_STATS }
+    { ...EMPTY_STATS },
   );
 }
 
@@ -61,7 +55,7 @@ export default function KnowledgeBaseCard({
       setLoading(true);
       knowledgeBaseApi
         .listQuestions(kb.id)
-        .then(list => {
+        .then((list) => {
           if (!cancelled) setStats(reduceStats(list));
         })
         .catch(() => {
@@ -80,13 +74,13 @@ export default function KnowledgeBaseCard({
     }
 
     const observer = new IntersectionObserver(
-      entries => {
-        if (entries.some(entry => entry.isIntersecting)) {
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
           observer.disconnect();
           fetchStats();
         }
       },
-      { rootMargin: '200px' }
+      { rootMargin: '200px' },
     );
     observer.observe(node);
 
@@ -96,14 +90,15 @@ export default function KnowledgeBaseCard({
     };
   }, [kb.id]);
 
-  const statsCell = loading || !stats
-    ? {
-        total: '–' as string | number,
-        draft: '–',
-        active: '–',
-        archived: '–',
-      }
-    : stats;
+  const statsCell =
+    loading || !stats
+      ? {
+          total: '–' as string | number,
+          draft: '–',
+          active: '–',
+          archived: '–',
+        }
+      : stats;
   const generating = isQuestionGenerationActive(kb.questionGenStatus);
 
   return (
@@ -119,16 +114,24 @@ export default function KnowledgeBaseCard({
           <h3 className="font-semibold text-slate-900 dark:text-white truncate">{kb.name}</h3>
           <p className="text-xs text-slate-400 truncate mt-0.5">{kb.originalFilename}</p>
         </div>
-        <div className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
-          generating
-            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-            : stats && stats.active > 0
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-            : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
-        }`}>
+        <div
+          className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
+            generating
+              ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+              : stats && stats.active > 0
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
+          }`}
+        >
           {generating
-            ? kb.questionGenStatus === 'QUEUED' ? '等待生成' : '生成中'
-            : loading ? '加载中' : stats && stats.active > 0 ? '可面试' : '未启用'}
+            ? kb.questionGenStatus === 'QUEUED'
+              ? '等待生成'
+              : '生成中'
+            : loading
+              ? '加载中'
+              : stats && stats.active > 0
+                ? '可面试'
+                : '未启用'}
         </div>
       </div>
 
@@ -140,7 +143,11 @@ export default function KnowledgeBaseCard({
         <div className="grid grid-cols-4 gap-2 mb-5 text-center">
           <StatCell label="总数" value={statsCell.total} />
           <StatCell label="草稿" value={statsCell.draft} />
-          <StatCell label="已启用" value={statsCell.active} highlight={!!stats && stats.active > 0} />
+          <StatCell
+            label="已启用"
+            value={statsCell.active}
+            highlight={!!stats && stats.active > 0}
+          />
           <StatCell label="已归档" value={statsCell.archived} />
         </div>
       )}
@@ -160,9 +167,11 @@ export default function KnowledgeBaseCard({
             disabled={generating}
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {generating
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <Sparkles className="w-3.5 h-3.5" />}
+            {generating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
             {generating ? '生成中' : '生成题目'}
           </button>
           <button
@@ -189,7 +198,9 @@ function StatCell({
 }) {
   return (
     <div className="rounded-lg bg-slate-50 dark:bg-slate-900 py-2">
-      <p className={`text-lg font-bold ${highlight ? 'text-primary-600 dark:text-primary-400' : 'text-slate-900 dark:text-white'}`}>
+      <p
+        className={`text-lg font-bold ${highlight ? 'text-primary-600 dark:text-primary-400' : 'text-slate-900 dark:text-white'}`}
+      >
         {value}
       </p>
       <p className="text-xs text-slate-400">{label}</p>

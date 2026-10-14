@@ -63,7 +63,7 @@ export interface VoiceEvaluationDetail {
  * Evaluation status response from GET/POST evaluation endpoints
  */
 export interface EvaluationStatusResponse {
-  evaluateStatus: string | null;  // PENDING | PROCESSING | COMPLETED | FAILED
+  evaluateStatus: string | null; // PENDING | PROCESSING | COMPLETED | FAILED
   evaluateError?: string | null;
   evaluateStatusUpdatedAt?: string | null;
   evaluation?: VoiceEvaluationDetail | null;
@@ -180,9 +180,7 @@ export const voiceInterviewApi = {
    * 获取会话消息列表
    */
   async getMessages(sessionId: number): Promise<InterviewMessage[]> {
-    return request.get<InterviewMessage[]>(
-      `/api/voice-interview/sessions/${sessionId}/messages`
-    );
+    return request.get<InterviewMessage[]>(`/api/voice-interview/sessions/${sessionId}/messages`);
   },
 
   /**
@@ -190,7 +188,7 @@ export const voiceInterviewApi = {
    */
   async getEvaluation(sessionId: number): Promise<EvaluationStatusResponse> {
     return request.get<EvaluationStatusResponse>(
-      `/api/voice-interview/sessions/${sessionId}/evaluation`
+      `/api/voice-interview/sessions/${sessionId}/evaluation`,
     );
   },
 
@@ -199,7 +197,7 @@ export const voiceInterviewApi = {
    */
   async generateEvaluation(sessionId: number): Promise<EvaluationStatusResponse> {
     return request.post<EvaluationStatusResponse>(
-      `/api/voice-interview/sessions/${sessionId}/evaluation`
+      `/api/voice-interview/sessions/${sessionId}/evaluation`,
     );
   },
 
@@ -207,19 +205,14 @@ export const voiceInterviewApi = {
    * Pause interview session
    */
   async pauseSession(sessionId: number, reason: string = 'user_initiated'): Promise<void> {
-    return request.put(
-      `/api/voice-interview/sessions/${sessionId}/pause`,
-      { reason }
-    );
+    return request.put(`/api/voice-interview/sessions/${sessionId}/pause`, { reason });
   },
 
   /**
    * Resume interview session
    */
   async resumeSession(sessionId: number): Promise<SessionResponse> {
-    return request.put<SessionResponse>(
-      `/api/voice-interview/sessions/${sessionId}/resume`
-    );
+    return request.put<SessionResponse>(`/api/voice-interview/sessions/${sessionId}/resume`);
   },
 
   /**
@@ -230,9 +223,7 @@ export const voiceInterviewApi = {
     if (userId) params.append('userId', userId);
     if (status) params.append('status', status);
 
-    return request.get<SessionMeta[]>(
-      `/api/voice-interview/sessions?${params.toString()}`
-    );
+    return request.get<SessionMeta[]>(`/api/voice-interview/sessions?${params.toString()}`);
   },
 
   /**
@@ -241,7 +232,6 @@ export const voiceInterviewApi = {
   async deleteSession(sessionId: number): Promise<void> {
     return request.delete(`/api/voice-interview/sessions/${sessionId}`);
   },
-
 };
 
 // ========== WebSocket 连接管理类 ==========
@@ -283,7 +273,7 @@ export class VoiceInterviewWebSocket {
             case 'subtitle':
               this.handlers.onSubtitle?.(
                 message.text,
-                (message as WebSocketSubtitleMessage).isFinal
+                (message as WebSocketSubtitleMessage).isFinal,
               );
               break;
             case 'audio':
@@ -404,7 +394,7 @@ export class VoiceInterviewWebSocket {
  */
 export function connectWebSocket(
   sessionId: number,
-  handlers: WebSocketEventHandlers
+  handlers: WebSocketEventHandlers,
 ): VoiceInterviewWebSocket {
   const webSocketUrl = buildVoiceWebSocketUrl(sessionId, API_BASE_URL, window.location.href);
   const ws = new VoiceInterviewWebSocket(sessionId, webSocketUrl, handlers);

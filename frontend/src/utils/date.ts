@@ -16,20 +16,20 @@ export function formatDate(
     day?: 'numeric' | '2-digit';
     hour?: '2-digit';
     minute?: '2-digit';
-  }
+  },
 ): string {
   if (!dateStr) return '-';
-  
+
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return '-';
-  
+
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    ...options
+    ...options,
   };
-  
+
   return date.toLocaleDateString('zh-CN', defaultOptions);
 }
 
@@ -42,7 +42,7 @@ export function formatDateTime(dateStr: string | null | undefined): string {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -53,7 +53,6 @@ export function formatDateOnly(dateStr: string | null | undefined): string {
   return formatDate(dateStr, {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
   });
 }
-

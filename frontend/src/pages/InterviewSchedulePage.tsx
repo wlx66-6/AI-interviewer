@@ -10,7 +10,11 @@ import { ScheduleList } from '../components/interviewschedule/ScheduleList';
 import { InterviewFormModal } from '../components/interviewschedule/InterviewFormModal';
 import { CalendarErrorBoundary } from '../components/interviewschedule/CalendarErrorBoundary';
 import ConfirmDialog from '../components/ConfirmDialog';
-import type { InterviewSchedule, InterviewFormData, InterviewStatus } from '../types/interviewSchedule';
+import type {
+  InterviewSchedule,
+  InterviewFormData,
+  InterviewStatus,
+} from '../types/interviewSchedule';
 
 export const InterviewSchedulePage: React.FC = () => {
   const {
@@ -58,71 +62,83 @@ export const InterviewSchedulePage: React.FC = () => {
     setIsDeleteConfirmOpen(false);
   }, [interviewToDelete, deleteInterview]);
 
-  const handleStatusChange = useCallback(async (id: number, status: InterviewStatus) => {
-    await updateStatus(id, status);
-  }, [updateStatus]);
+  const handleStatusChange = useCallback(
+    async (id: number, status: InterviewStatus) => {
+      await updateStatus(id, status);
+    },
+    [updateStatus],
+  );
 
-  const handleEventDrop = useCallback(async (data: { event: any; start: Date | string; end: Date | string }) => {
-    // Update interview time when dragged
-    const interview = interviews.find(i => i.id === data.event.id);
-    if (interview) {
-      try {
-        const startDate = typeof data.start === 'string' ? new Date(data.start) : data.start;
-        await updateInterview(data.event.id, {
-          companyName: interview.companyName,
-          position: interview.position,
-          interviewTime: dayjs(startDate).format('YYYY-MM-DDTHH:mm:ss'),
-          interviewType: interview.interviewType,
-          meetingLink: interview.meetingLink,
-          roundNumber: interview.roundNumber,
-          interviewer: interview.interviewer,
-          notes: interview.notes,
-        });
-      } catch (error) {
-        console.error('Failed to update interview time:', error);
-        alert('更新面试时间失败，请重试');
+  const handleEventDrop = useCallback(
+    async (data: { event: any; start: Date | string; end: Date | string }) => {
+      // Update interview time when dragged
+      const interview = interviews.find((i) => i.id === data.event.id);
+      if (interview) {
+        try {
+          const startDate = typeof data.start === 'string' ? new Date(data.start) : data.start;
+          await updateInterview(data.event.id, {
+            companyName: interview.companyName,
+            position: interview.position,
+            interviewTime: dayjs(startDate).format('YYYY-MM-DDTHH:mm:ss'),
+            interviewType: interview.interviewType,
+            meetingLink: interview.meetingLink,
+            roundNumber: interview.roundNumber,
+            interviewer: interview.interviewer,
+            notes: interview.notes,
+          });
+        } catch (error) {
+          console.error('Failed to update interview time:', error);
+          alert('更新面试时间失败，请重试');
+        }
       }
-    }
-  }, [interviews, updateInterview]);
+    },
+    [interviews, updateInterview],
+  );
 
-  const handleEventResize = useCallback(async (data: { event: any; start: Date | string; end: Date | string }) => {
-    // Update interview duration when resized
-    const interview = interviews.find(i => i.id === data.event.id);
-    if (interview) {
-      try {
-        const startDate = typeof data.start === 'string' ? new Date(data.start) : data.start;
-        await updateInterview(data.event.id, {
-          companyName: interview.companyName,
-          position: interview.position,
-          interviewTime: dayjs(startDate).format('YYYY-MM-DDTHH:mm:ss'),
-          interviewType: interview.interviewType,
-          meetingLink: interview.meetingLink,
-          roundNumber: interview.roundNumber,
-          interviewer: interview.interviewer,
-          notes: interview.notes,
-        });
-      } catch (error) {
-        console.error('Failed to update interview duration:', error);
-        alert('更新面试时长失败，请重试');
+  const handleEventResize = useCallback(
+    async (data: { event: any; start: Date | string; end: Date | string }) => {
+      // Update interview duration when resized
+      const interview = interviews.find((i) => i.id === data.event.id);
+      if (interview) {
+        try {
+          const startDate = typeof data.start === 'string' ? new Date(data.start) : data.start;
+          await updateInterview(data.event.id, {
+            companyName: interview.companyName,
+            position: interview.position,
+            interviewTime: dayjs(startDate).format('YYYY-MM-DDTHH:mm:ss'),
+            interviewType: interview.interviewType,
+            meetingLink: interview.meetingLink,
+            roundNumber: interview.roundNumber,
+            interviewer: interview.interviewer,
+            notes: interview.notes,
+          });
+        } catch (error) {
+          console.error('Failed to update interview duration:', error);
+          alert('更新面试时长失败，请重试');
+        }
       }
-    }
-  }, [interviews, updateInterview]);
+    },
+    [interviews, updateInterview],
+  );
 
-  const handleFormSubmit = useCallback(async (data: InterviewFormData) => {
-    if (modalMode === 'create') {
-      await createInterview(data);
-    } else if (selectedInterview) {
-      await updateInterview(selectedInterview.id, data);
-    }
-    setIsModalOpen(false);
-    setSelectedInterview(null);
-  }, [modalMode, selectedInterview, createInterview, updateInterview]);
+  const handleFormSubmit = useCallback(
+    async (data: InterviewFormData) => {
+      if (modalMode === 'create') {
+        await createInterview(data);
+      } else if (selectedInterview) {
+        await updateInterview(selectedInterview.id, data);
+      }
+      setIsModalOpen(false);
+      setSelectedInterview(null);
+    },
+    [modalMode, selectedInterview, createInterview, updateInterview],
+  );
 
   // Event drop functionality removed - react-big-calendar doesn't support drag and drop in this version
 
   const handleConfirmChanges = useCallback(async () => {
     for (const [id, newTime] of pendingChanges) {
-      const interview = interviews.find(i => i.id === id);
+      const interview = interviews.find((i) => i.id === id);
       if (interview) {
         await updateInterview(id, {
           companyName: interview.companyName,

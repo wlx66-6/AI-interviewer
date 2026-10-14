@@ -1,12 +1,4 @@
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock3,
-  FileText,
-  Loader2,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, FileText, Loader2, RefreshCw, X } from 'lucide-react';
 
 import { MAX_BATCH_FILES } from '../../utils/batchUpload';
 import type { BatchUploadItem, BatchUploadStatus } from '../../types/batchUpload';
@@ -32,56 +24,82 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function StatusBadge({ status, processLabel }: { status: BatchUploadStatus; processLabel: string }) {
+function StatusBadge({
+  status,
+  processLabel,
+}: {
+  status: BatchUploadStatus;
+  processLabel: string;
+}) {
   const styles = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium';
 
   switch (status) {
     case 'READY':
       return (
-        <span className={`${styles} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300`}>
-          <Clock3 className="h-3.5 w-3.5" />待提交
+        <span
+          className={`${styles} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300`}
+        >
+          <Clock3 className="h-3.5 w-3.5" />
+          待提交
         </span>
       );
     case 'UPLOADING':
       return (
-        <span className={`${styles} bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300`}>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />上传中
+        <span
+          className={`${styles} bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300`}
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          上传中
         </span>
       );
     case 'PENDING':
       return (
-        <span className={`${styles} bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300`}>
-          <Clock3 className="h-3.5 w-3.5" />等待{processLabel}
+        <span
+          className={`${styles} bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300`}
+        >
+          <Clock3 className="h-3.5 w-3.5" />
+          等待{processLabel}
         </span>
       );
     case 'PROCESSING':
       return (
-        <span className={`${styles} bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300`}>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />{processLabel}中
+        <span
+          className={`${styles} bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300`}
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          {processLabel}中
         </span>
       );
     case 'COMPLETED':
       return (
-        <span className={`${styles} bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300`}>
-          <CheckCircle2 className="h-3.5 w-3.5" />已完成
+        <span
+          className={`${styles} bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          已完成
         </span>
       );
     case 'UPLOAD_FAILED':
       return (
         <span className={`${styles} bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300`}>
-          <AlertCircle className="h-3.5 w-3.5" />上传失败
+          <AlertCircle className="h-3.5 w-3.5" />
+          上传失败
         </span>
       );
     case 'PROCESS_FAILED':
       return (
         <span className={`${styles} bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300`}>
-          <AlertCircle className="h-3.5 w-3.5" />{processLabel}失败
+          <AlertCircle className="h-3.5 w-3.5" />
+          {processLabel}失败
         </span>
       );
     case 'QUEUED':
       return (
-        <span className={`${styles} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300`}>
-          <Clock3 className="h-3.5 w-3.5" />等待上传
+        <span
+          className={`${styles} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300`}
+        >
+          <Clock3 className="h-3.5 w-3.5" />
+          等待上传
         </span>
       );
   }
@@ -125,7 +143,7 @@ export default function BatchUploadList({
       </div>
 
       <div className="divide-y divide-slate-100 dark:divide-slate-700">
-        {items.map(item => {
+        {items.map((item) => {
           const canEdit = item.status === 'READY' || item.status === 'UPLOAD_FAILED';
           const retryCoolingDown = Boolean(item.retryAvailableAt);
           return (
@@ -149,15 +167,17 @@ export default function BatchUploadList({
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       {formatFileSize(item.file.size)}
                     </p>
-                    {customNamePlaceholder && <input
-                      type="text"
-                      value={item.customName}
-                      disabled={!canEdit}
-                      onChange={event => onNameChange(item.clientId, event.target.value)}
-                      placeholder={customNamePlaceholder}
-                      aria-label={`${item.file.name}的名称`}
-                      className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:ring-primary-900/40 dark:disabled:bg-slate-800"
-                    />}
+                    {customNamePlaceholder && (
+                      <input
+                        type="text"
+                        value={item.customName}
+                        disabled={!canEdit}
+                        onChange={(event) => onNameChange(item.clientId, event.target.value)}
+                        placeholder={customNamePlaceholder}
+                        aria-label={`${item.file.name}的名称`}
+                        className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:ring-primary-900/40 dark:disabled:bg-slate-800"
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -182,9 +202,11 @@ export default function BatchUploadList({
                       className="rounded-lg p-2 text-slate-400 transition hover:bg-primary-50 hover:text-primary-500 disabled:opacity-50 dark:hover:bg-primary-900/30"
                       title={`重新${processLabel}`}
                     >
-                      <RefreshCw className={`h-4 w-4 ${
-                        retryingProcessId === item.entityId ? 'animate-spin' : ''
-                      }`} />
+                      <RefreshCw
+                        className={`h-4 w-4 ${
+                          retryingProcessId === item.entityId ? 'animate-spin' : ''
+                        }`}
+                      />
                     </button>
                   )}
                   {canEdit && (

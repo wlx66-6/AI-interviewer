@@ -1,14 +1,14 @@
-import {useEffect, useRef, useState} from 'react';
-import {motion} from 'framer-motion';
-import {interviewApi} from '../api/interview';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { interviewApi } from '../api/interview';
 import ConfirmDialog from '../components/ConfirmDialog';
 import InterviewChatPanel from '../components/InterviewChatPanel';
 import InterviewPageHeader from '../components/InterviewPageHeader';
-import type {InterviewQuestion, InterviewSession} from '../types/interview';
-import type {Difficulty} from '../components/UnifiedInterviewModal';
-import type {CategoryDTO} from '../api/skill';
+import type { InterviewQuestion, InterviewSession } from '../types/interview';
+import type { Difficulty } from '../components/UnifiedInterviewModal';
+import type { CategoryDTO } from '../api/skill';
 import { CUSTOM_SKILL_ID } from '../hooks/useInterviewConfig';
-import {resolveInterviewEntry} from './interviewEntry';
+import { resolveInterviewEntry } from './interviewEntry';
 
 interface Message {
   type: 'interviewer' | 'user';
@@ -147,12 +147,12 @@ export default function Interview({
           type: 'interviewer',
           content: q.question,
           category: q.category,
-          questionIndex: i
+          questionIndex: i,
         });
         if (q.userAnswer) {
           restoredMessages.push({
             type: 'user',
-            content: q.userAnswer
+            content: q.userAnswer,
           });
         }
       }
@@ -167,27 +167,30 @@ export default function Interview({
 
     const userMessage: Message = {
       type: 'user',
-      content: answer
+      content: answer,
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       const response = await interviewApi.submitAnswer({
         sessionId: session.sessionId,
         questionIndex: currentQuestion.questionIndex,
-        answer: answer.trim()
+        answer: answer.trim(),
       });
 
       setAnswer('');
 
       if (response.hasNextQuestion && response.nextQuestion) {
         setCurrentQuestion(response.nextQuestion);
-        setMessages(prev => [...prev, {
-          type: 'interviewer',
-          content: response.nextQuestion!.question,
-          category: response.nextQuestion!.category,
-          questionIndex: response.nextQuestion!.questionIndex
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'interviewer',
+            content: response.nextQuestion!.question,
+            category: response.nextQuestion!.category,
+            questionIndex: response.nextQuestion!.questionIndex,
+          },
+        ]);
       } else {
         onInterviewComplete();
       }
@@ -269,21 +272,47 @@ export default function Interview({
       <InterviewPageHeader
         title={title}
         subtitle={subtitle}
-        icon={(
+        icon={
           <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M19 10v2a7 7 0 0 1-14 0v-2"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <line
+              x1="12"
+              y1="19"
+              x2="12"
+              y2="23"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <line
+              x1="8"
+              y1="23"
+              x2="16"
+              y2="23"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
-        )}
+        }
       />
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
         <InterviewChatPanel
           session={session}
           currentQuestion={currentQuestion}

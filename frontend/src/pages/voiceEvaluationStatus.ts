@@ -17,9 +17,7 @@ interface VoiceEvaluationStatusInput {
   now?: number;
 }
 
-export function shouldRefreshVoiceEvaluationPresentation(
-  status?: string | null,
-): boolean {
+export function shouldRefreshVoiceEvaluationPresentation(status?: string | null): boolean {
   return status === 'PENDING' || status === 'PROCESSING';
 }
 
@@ -29,8 +27,7 @@ function hasWaitedPastRetryThreshold(
 ): boolean {
   if (!statusUpdatedAt) return false;
   const updatedAt = new Date(statusUpdatedAt).getTime();
-  return Number.isFinite(updatedAt)
-    && now - updatedAt >= VOICE_EVALUATION_RETRY_AFTER_MS;
+  return Number.isFinite(updatedAt) && now - updatedAt >= VOICE_EVALUATION_RETRY_AFTER_MS;
 }
 
 export function getVoiceEvaluationPresentation({

@@ -94,10 +94,10 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generateError, setGenerateError] = useState('');
-  const [generationStatus, setGenerationStatus] =
-    useState<QuestionGenStatusResponse | null>(null);
-  const [trackedTaskId, setTrackedTaskId] =
-    useState<string | null>(routeState?.questionGenTaskId || null);
+  const [generationStatus, setGenerationStatus] = useState<QuestionGenStatusResponse | null>(null);
+  const [trackedTaskId, setTrackedTaskId] = useState<string | null>(
+    routeState?.questionGenTaskId || null,
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<KnowledgeBaseQuestion | null>(null);
@@ -149,7 +149,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
       setQuestions(filtered);
       // 基于全量题目本地聚合并排序方向，避免每次筛选都额外请求 distinct 接口
       const categories = new Set<string>();
-      all.forEach(q => {
+      all.forEach((q) => {
         if (q.category) categories.add(q.category);
       });
       setCategoryOptions(Array.from(categories).sort((a, b) => a.localeCompare(b)));
@@ -177,19 +177,17 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
         const current = await knowledgeBaseApi.getQuestionGenerationStatus(knowledgeBaseIdNum);
         if (cancelled) return;
 
-        const sameTask = trackedTaskId === null
-          || current.questionGenTaskId === trackedTaskId;
+        const sameTask = trackedTaskId === null || current.questionGenTaskId === trackedTaskId;
         setGenerationStatus(current);
-        if (current.questionGenTaskId && trackedTaskId === null
-            && isQuestionGenerationActive(current.questionGenStatus)) {
+        if (
+          current.questionGenTaskId &&
+          trackedTaskId === null &&
+          isQuestionGenerationActive(current.questionGenStatus)
+        ) {
           setTrackedTaskId(current.questionGenTaskId);
         }
 
-        if (shouldRefreshGeneratedQuestions(
-          previousStatus,
-          current.questionGenStatus,
-          sameTask
-        )) {
+        if (shouldRefreshGeneratedQuestions(previousStatus, current.questionGenStatus, sameTask)) {
           setFilters({
             status: 'DRAFT',
             category: '',
@@ -229,7 +227,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
         counts[q.status] += 1;
         return counts;
       },
-      { DRAFT: 0, ACTIVE: 0, ARCHIVED: 0, STALE: 0 }
+      { DRAFT: 0, ACTIVE: 0, ARCHIVED: 0, STALE: 0 },
     );
   }, [allQuestions]);
 
@@ -237,14 +235,15 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
   const safePage = Math.min(page, totalPages - 1);
   const pagedQuestions = useMemo(
     () => questions.slice(safePage * pageSize, safePage * pageSize + pageSize),
-    [questions, safePage, pageSize]
+    [questions, safePage, pageSize],
   );
-  const allOnPageSelected = pagedQuestions.length > 0 && pagedQuestions.every(q => selectedIds.has(q.id));
+  const allOnPageSelected =
+    pagedQuestions.length > 0 && pagedQuestions.every((q) => selectedIds.has(q.id));
 
   const toggleSelectAll = () => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
-      pagedQuestions.forEach(q => {
+      pagedQuestions.forEach((q) => {
         if (allOnPageSelected) next.delete(q.id);
         else next.add(q.id);
       });
@@ -253,7 +252,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
   };
 
   const toggleSelectOne = (id: number) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -265,10 +264,12 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
 
   const openCreateForm = () => {
     setEditingQuestion(null);
-    setForm(emptyQuestionForm({
-      category: filters.category,
-      difficulty: filters.difficulty || DEFAULT_DIFFICULTY,
-    }));
+    setForm(
+      emptyQuestionForm({
+        category: filters.category,
+        difficulty: filters.difficulty || DEFAULT_DIFFICULTY,
+      }),
+    );
     setFormError('');
     setFormOpen(true);
   };
@@ -301,9 +302,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
     }
   };
 
-  const generationNotice = generationStatus
-    ? getQuestionGenerationNotice(generationStatus)
-    : null;
+  const generationNotice = generationStatus ? getQuestionGenerationNotice(generationStatus) : null;
   const generationActive = isQuestionGenerationActive(generationStatus?.questionGenStatus);
   const retryConfig = generationStatus?.questionGenConfig
     ? {
@@ -374,11 +373,11 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
     const ids = Array.from(selectedIds);
     let failed = 0;
     await Promise.all(
-      ids.map(id =>
+      ids.map((id) =>
         knowledgeBaseApi.updateQuestionStatus(id, status).catch(() => {
           failed += 1;
-        })
-      )
+        }),
+      ),
     );
     setBatchRunning(false);
     if (failed > 0) {
@@ -395,11 +394,11 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
     const ids = Array.from(selectedIds);
     let failed = 0;
     await Promise.all(
-      ids.map(id =>
+      ids.map((id) =>
         knowledgeBaseApi.deleteQuestion(id).catch(() => {
           failed += 1;
-        })
-      )
+        }),
+      ),
     );
     setBatchRunning(false);
     setBatchDeleteOpen(false);
@@ -463,9 +462,11 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
             disabled={generationActive}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {generationActive
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Sparkles className="w-4 h-4" />}
+            {generationActive ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
             {generationActive ? '生成中' : '生成题目'}
           </button>
           <button
@@ -479,15 +480,13 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {STATUS_TABS.map(tab => {
-          const count = tab.value === ''
-            ? allQuestions.length
-            : statusCounts[tab.value] ?? 0;
+        {STATUS_TABS.map((tab) => {
+          const count = tab.value === '' ? allQuestions.length : (statusCounts[tab.value] ?? 0);
           const active = filters.status === tab.value;
           return (
             <button
               key={tab.value || 'all'}
-              onClick={() => setFilters(prev => ({ ...prev, status: tab.value }))}
+              onClick={() => setFilters((prev) => ({ ...prev, status: tab.value }))}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active
                   ? 'bg-primary-500 text-white'
@@ -495,7 +494,9 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
               }`}
             >
               {tab.label}
-              <span className={`px-1.5 py-0.5 rounded text-xs ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
+              <span
+                className={`px-1.5 py-0.5 rounded text-xs ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}
+              >
                 {count}
               </span>
             </button>
@@ -509,29 +510,35 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               value={filters.keyword}
-              onChange={event => setFilters(prev => ({ ...prev, keyword: event.target.value }))}
+              onChange={(event) => setFilters((prev) => ({ ...prev, keyword: event.target.value }))}
               className={`${INPUT_CLASS} pl-9`}
               placeholder="搜索题干 / 参考答案"
             />
           </div>
           <select
             value={filters.category}
-            onChange={event => setFilters(prev => ({ ...prev, category: event.target.value }))}
+            onChange={(event) => setFilters((prev) => ({ ...prev, category: event.target.value }))}
             className={INPUT_CLASS}
           >
             <option value="">全部方向</option>
-            {categoryOptions.map(category => (
-              <option key={category} value={category}>{category}</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
             ))}
           </select>
           <select
             value={filters.difficulty}
-            onChange={event => setFilters(prev => ({ ...prev, difficulty: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({ ...prev, difficulty: event.target.value }))
+            }
             className={INPUT_CLASS}
           >
             <option value="">全部难度</option>
-            {DIFFICULTY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {DIFFICULTY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
           <div className="flex gap-2">
@@ -560,7 +567,11 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
           {selectedIds.size > 0 && (
             <>
               <span className="text-sm text-slate-500 dark:text-slate-400">
-                已选 <span className="font-semibold text-primary-600 dark:text-primary-400">{selectedIds.size}</span> 道
+                已选{' '}
+                <span className="font-semibold text-primary-600 dark:text-primary-400">
+                  {selectedIds.size}
+                </span>{' '}
+                道
               </span>
               <div className="flex gap-2">
                 <button
@@ -604,15 +615,17 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
 
       <div className="space-y-3">
         {generationNotice && (
-          <div className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
-            generationNotice.tone === 'error'
-              ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400'
-              : generationNotice.tone === 'warning'
-                ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-900/20 dark:text-amber-400'
-                : generationNotice.tone === 'success'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-400'
-                  : 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-900 dark:bg-primary-900/20 dark:text-primary-400'
-          }`}>
+          <div
+            className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
+              generationNotice.tone === 'error'
+                ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400'
+                : generationNotice.tone === 'warning'
+                  ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-900/20 dark:text-amber-400'
+                  : generationNotice.tone === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-400'
+                    : 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-900 dark:bg-primary-900/20 dark:text-primary-400'
+            }`}
+          >
             <span className="inline-flex items-center gap-2">
               {generationActive && <Loader2 className="w-4 h-4 animate-spin" />}
               {generationNotice.text}
@@ -650,7 +663,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
           </div>
         ) : (
           <>
-            {pagedQuestions.map(question => (
+            {pagedQuestions.map((question) => (
               <QuestionCard
                 key={question.id}
                 question={question}
@@ -659,7 +672,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
                 onSelect={toggleSelectOne}
                 onEdit={openEditForm}
                 onUpdateStatus={handleUpdateStatus}
-                onDelete={q => setDeleteQuestion(q)}
+                onDelete={(q) => setDeleteQuestion(q)}
               />
             ))}
             <Pagination
@@ -668,7 +681,7 @@ export default function KnowledgeBaseInterviewQuestionsPage() {
               total={questions.length}
               totalPages={totalPages}
               onPageChange={setPage}
-              onPageSizeChange={size => {
+              onPageSizeChange={(size) => {
                 setPageSize(size);
                 setPage(0);
               }}
@@ -759,27 +772,28 @@ function Pagination({
     <div className="flex flex-wrap items-center justify-between gap-3 mt-4 px-1 text-sm">
       <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
         <span>
-          第 <span className="font-semibold text-slate-700 dark:text-slate-200">{from}-{to}</span> /
-          共 <span className="font-semibold text-slate-700 dark:text-slate-200">{total}</span> 道
+          第{' '}
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            {from}-{to}
+          </span>{' '}
+          / 共 <span className="font-semibold text-slate-700 dark:text-slate-200">{total}</span> 道
         </span>
         <span className="text-slate-300 dark:text-slate-600">|</span>
         <span>每页</span>
         <select
           value={pageSize}
-          onChange={event => onPageSizeChange(parseInt(event.target.value, 10))}
+          onChange={(event) => onPageSizeChange(parseInt(event.target.value, 10))}
           className="px-2 py-1 rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
         >
-          {PAGE_SIZE_OPTIONS.map(size => (
-            <option key={size} value={size}>{size}</option>
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
           ))}
         </select>
       </div>
       <div className="flex items-center gap-1">
-        <PaginationButton
-          disabled={page === 0}
-          onClick={() => onPageChange(0)}
-          title="第一页"
-        >
+        <PaginationButton disabled={page === 0} onClick={() => onPageChange(0)} title="第一页">
           «
         </PaginationButton>
         <PaginationButton

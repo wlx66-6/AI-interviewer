@@ -6,11 +6,14 @@ import type {
   CreateInterviewRequest,
   ParseRequest,
   ParseResponse,
-  InterviewStatus
+  InterviewStatus,
 } from '../types/interviewSchedule';
 
 export const interviewScheduleApi = {
-  parse: async (rawText: string, source?: 'feishu' | 'tencent' | 'zoom' | 'other'): Promise<ParseResponse> => {
+  parse: async (
+    rawText: string,
+    source?: 'feishu' | 'tencent' | 'zoom' | 'other',
+  ): Promise<ParseResponse> => {
     const payload: ParseRequest = { rawText, source };
     return await request.post<ParseResponse>('/api/interview-schedule/parse', payload);
   },
@@ -23,7 +26,7 @@ export const interviewScheduleApi = {
     return await request.get<InterviewSchedule>(`/api/interview-schedule/${id}`);
   },
 
-  getAll: async (params?:{
+  getAll: async (params?: {
     status?: string;
     start?: string;
     end?: string;
@@ -41,7 +44,7 @@ export const interviewScheduleApi = {
 
   updateStatus: async (id: number, status: InterviewStatus): Promise<InterviewSchedule> => {
     return await request.patch<InterviewSchedule>(`/api/interview-schedule/${id}/status`, null, {
-      params: { status }
+      params: { status },
     });
   },
 };

@@ -12,15 +12,19 @@ export const knowledgeBaseUploadAdapter: BatchUploadAdapter = {
     return {
       entityId: result.knowledgeBase.id,
       duplicate: result.duplicate,
-      ...getUploadOutcome(normalizeProcessingStatus(result.knowledgeBase.vectorStatus),
-        result.enqueueAccepted, result.message, '向量化'),
+      ...getUploadOutcome(
+        normalizeProcessingStatus(result.knowledgeBase.vectorStatus),
+        result.enqueueAccepted,
+        result.message,
+        '向量化',
+      ),
     };
   },
   async getStatus(id, signal) {
     const result = await knowledgeBaseApi.getKnowledgeBase(id, signal);
     return { id: result.id, status: result.vectorStatus, error: result.vectorError };
   },
-  retry: id => knowledgeBaseApi.revectorize(id),
+  retry: (id) => knowledgeBaseApi.revectorize(id),
 };
 
 export const resumeUploadAdapter: BatchUploadAdapter = {
@@ -30,8 +34,10 @@ export const resumeUploadAdapter: BatchUploadAdapter = {
     const id = result.resume?.id ?? result.storage?.resumeId;
     if (!id) throw new Error('上传结果缺少简历 ID，请重试');
     // 历史重复简历可能只返回 analysis + storage；有显式状态时以显式状态为准。
-    const status = normalizeProcessingStatus(result.resume?.analyzeStatus,
-      result.analysis ? 'COMPLETED' : 'PENDING');
+    const status = normalizeProcessingStatus(
+      result.resume?.analyzeStatus,
+      result.analysis ? 'COMPLETED' : 'PENDING',
+    );
     return {
       entityId: id,
       duplicate: result.duplicate,
@@ -42,10 +48,12 @@ export const resumeUploadAdapter: BatchUploadAdapter = {
     const result = await historyApi.getResumeDetail(id, signal);
     return {
       id: result.id,
-      status: normalizeProcessingStatus(result.analyzeStatus,
-        result.analyses?.length ? 'COMPLETED' : 'PENDING'),
+      status: normalizeProcessingStatus(
+        result.analyzeStatus,
+        result.analyses?.length ? 'COMPLETED' : 'PENDING',
+      ),
       error: result.analyzeError,
     };
   },
-  retry: id => historyApi.reanalyze(id),
+  retry: (id) => historyApi.reanalyze(id),
 };

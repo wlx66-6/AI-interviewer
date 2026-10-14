@@ -3,7 +3,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
-import type { InterviewFormData, ParseResponse, InterviewType } from '../../types/interviewSchedule';
+import type {
+  InterviewFormData,
+  ParseResponse,
+  InterviewType,
+} from '../../types/interviewSchedule';
 import { interviewScheduleApi } from '../../api/interviewSchedule';
 import dayjs from 'dayjs';
 
@@ -42,16 +46,18 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<InterviewFormData>(initialData || {
-    companyName: '',
-    position: '',
-    interviewTime: '',
-    interviewType: 'VIDEO' as InterviewType,
-    meetingLink: '',
-    roundNumber: 1,
-    interviewer: '',
-    notes: '',
-  });
+  const [formData, setFormData] = useState<InterviewFormData>(
+    initialData || {
+      companyName: '',
+      position: '',
+      interviewTime: '',
+      interviewType: 'VIDEO' as InterviewType,
+      meetingLink: '',
+      roundNumber: 1,
+      interviewer: '',
+      notes: '',
+    },
+  );
 
   // Reset state when modal opens or mode changes
   React.useEffect(() => {
@@ -60,16 +66,18 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       setRawText('');
       setParseResult(null);
       setSubmitError(null);
-      setFormData(initialData || {
-        companyName: '',
-        position: '',
-        interviewTime: '',
-        interviewType: 'VIDEO' as InterviewType,
-        meetingLink: '',
-        roundNumber: 1,
-        interviewer: '',
-        notes: '',
-      });
+      setFormData(
+        initialData || {
+          companyName: '',
+          position: '',
+          interviewTime: '',
+          interviewType: 'VIDEO' as InterviewType,
+          meetingLink: '',
+          roundNumber: 1,
+          interviewer: '',
+          notes: '',
+        },
+      );
     }
   }, [isOpen, mode, initialData]);
 
@@ -107,7 +115,7 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
   };
 
   const handleFormChange = (field: keyof InterviewFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,8 +166,18 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
             <div className="flex-1">
@@ -178,8 +196,18 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-              <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                className="w-5 h-5 text-slate-600 dark:text-slate-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </div>
             <div className="flex-1">
@@ -239,11 +267,13 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
     <div className="space-y-6">
       {parseResult && (
         <>
-          <div className={`p-5 rounded-xl border ${
-            parseResult.success
-              ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 border-emerald-200 dark:border-emerald-700'
-              : 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/50 dark:to-red-900/30 border-red-200 dark:border-red-700'
-          }`}>
+          <div
+            className={`p-5 rounded-xl border ${
+              parseResult.success
+                ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 border-emerald-200 dark:border-emerald-700'
+                : 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/50 dark:to-red-900/30 border-red-200 dark:border-red-700'
+            }`}
+          >
             <div className="flex items-center gap-3 mb-3">
               {parseResult.success ? (
                 <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -255,7 +285,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
               </span>
               {parseResult.success && (
                 <span className="text-sm text-slate-600 dark:text-slate-400 ml-auto">
-                  置信度: <span className="font-semibold text-emerald-700 dark:text-emerald-300">{(parseResult.confidence * 100).toFixed(0)}%</span>
+                  置信度:{' '}
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                    {(parseResult.confidence * 100).toFixed(0)}%
+                  </span>
                 </span>
               )}
             </div>
@@ -263,21 +296,37 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
             {parseResult.success && parseResult.data && (
               <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-4 rounded-lg space-y-2.5 text-sm border border-slate-200/50 dark:border-slate-700/50">
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">公司:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{parseResult.data.companyName}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">
+                    公司:
+                  </span>
+                  <span className="text-slate-900 dark:text-slate-100 font-medium">
+                    {parseResult.data.companyName}
+                  </span>
                 </div>
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">岗位:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{parseResult.data.position}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">
+                    岗位:
+                  </span>
+                  <span className="text-slate-900 dark:text-slate-100 font-medium">
+                    {parseResult.data.position}
+                  </span>
                 </div>
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">时间:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{dayjs(parseResult.data.interviewTime).format('YYYY-MM-DD HH:mm')}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">
+                    时间:
+                  </span>
+                  <span className="text-slate-900 dark:text-slate-100 font-medium">
+                    {dayjs(parseResult.data.interviewTime).format('YYYY-MM-DD HH:mm')}
+                  </span>
                 </div>
                 {parseResult.data.meetingLink && (
                   <div className="flex">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">会议:</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-medium truncate">{parseResult.data.meetingLink}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">
+                      会议:
+                    </span>
+                    <span className="text-slate-900 dark:text-slate-100 font-medium truncate">
+                      {parseResult.data.meetingLink}
+                    </span>
                   </div>
                 )}
               </div>
@@ -354,7 +403,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
         </label>
         <input
           type="datetime-local"
-          value={formData.interviewTime ? dayjs(formData.interviewTime).format('YYYY-MM-DDTHH:mm') : ''}
+          value={
+            formData.interviewTime ? dayjs(formData.interviewTime).format('YYYY-MM-DDTHH:mm') : ''
+          }
           onChange={(e) => handleFormChange('interviewTime', e.target.value)}
           required
           className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
@@ -362,7 +413,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">面试形式</label>
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          面试形式
+        </label>
         <select
           value={formData.interviewType}
           onChange={(e) => handleFormChange('interviewType', e.target.value)}
@@ -375,7 +428,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">会议链接</label>
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          会议链接
+        </label>
         <input
           type="url"
           value={formData.meetingLink}
@@ -386,7 +441,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">第几轮面试</label>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            第几轮面试
+          </label>
           <input
             type="number"
             min="1"
@@ -397,7 +454,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">面试官</label>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            面试官
+          </label>
           <input
             type="text"
             value={formData.interviewer}
@@ -408,7 +467,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">备注</label>
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          备注
+        </label>
         <textarea
           value={formData.notes}
           onChange={(e) => handleFormChange('notes', e.target.value)}

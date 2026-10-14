@@ -33,13 +33,13 @@ export function useBatchStatusPolling(
 
   const resume = useCallback((id: number) => {
     pausedIdsRef.current.delete(id);
-    setRevision(current => current + 1);
+    setRevision((current) => current + 1);
   }, []);
 
   useEffect(() => {
     const polls = pollsRef.current;
     const ids = new Set(trackedIdsKey ? trackedIdsKey.split(',').map(Number) : []);
-    const publishError = () => setError([...polls.values()].some(poll => poll.failed));
+    const publishError = () => setError([...polls.values()].some((poll) => poll.failed));
 
     for (const [id, poll] of polls) {
       if (!ids.has(id)) {

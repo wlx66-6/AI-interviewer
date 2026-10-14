@@ -7,11 +7,7 @@ interface InterviewPageHeaderProps {
   icon: ReactNode;
 }
 
-export default function InterviewPageHeader({
-  title,
-  subtitle,
-  icon,
-}: InterviewPageHeaderProps) {
+export default function InterviewPageHeader({ title, subtitle, icon }: InterviewPageHeaderProps) {
   return (
     <motion.div
       className="text-center mb-8"

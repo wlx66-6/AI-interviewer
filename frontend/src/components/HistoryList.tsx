@@ -1,9 +1,9 @@
-import {useCallback, useEffect, useState} from 'react';
-import {AnimatePresence, motion} from 'framer-motion';
-import {AnalyzeStatus, historyApi, ResumeListItem, ResumeStats} from '../api/history';
+import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AnalyzeStatus, historyApi, ResumeListItem, ResumeStats } from '../api/history';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
-import {getScoreColor} from '../utils/score';
-import {formatDate} from '../utils/date';
+import { getScoreColor } from '../utils/score';
+import { formatDate } from '../utils/date';
 import {
   AlertCircle,
   CheckCircle,
@@ -161,9 +161,10 @@ export default function HistoryList({ onSelectResume }: HistoryListProps) {
   // 待处理判断：显式的 PENDING/PROCESSING 状态，或状态未定义且无分数
   useEffect(() => {
     const hasPendingItems = resumes.some(
-      r => r.analyzeStatus === 'PENDING' ||
+      (r) =>
+        r.analyzeStatus === 'PENDING' ||
         r.analyzeStatus === 'PROCESSING' ||
-        (r.analyzeStatus === undefined && r.latestScore === undefined)
+        (r.analyzeStatus === undefined && r.latestScore === undefined),
     );
 
     if (hasPendingItems && !loading) {
@@ -222,16 +223,12 @@ export default function HistoryList({ onSelectResume }: HistoryListProps) {
     }
   };
 
-  const filteredResumes = resumes.filter(resume =>
-    resume.filename.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredResumes = resumes.filter((resume) =>
+    resume.filename.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
-    <motion.div
-      className="w-full"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
+    <motion.div className="w-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* 头部 */}
       <div className="flex justify-between items-start mb-8 flex-wrap gap-6">
         <div>
@@ -357,7 +354,10 @@ export default function HistoryList({ onSelectResume }: HistoryListProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <StatusIcon status={resume.analyzeStatus} hasScore={resume.latestScore !== undefined} />
+                        <StatusIcon
+                          status={resume.analyzeStatus}
+                          hasScore={resume.latestScore !== undefined}
+                        />
                         <span className="text-sm text-slate-600">
                           {getStatusText(resume.analyzeStatus, resume.latestScore !== undefined)}
                         </span>
@@ -387,8 +387,9 @@ export default function HistoryList({ onSelectResume }: HistoryListProps) {
                           {resume.interviewCount} 次
                         </span>
                       ) : (
-                          <span
-                              className="inline-flex px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-full text-sm">待面试</span>
+                        <span className="inline-flex px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-full text-sm">
+                          待面试
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">
@@ -414,7 +415,9 @@ export default function HistoryList({ onSelectResume }: HistoryListProps) {
                             className="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
                             title="重新分析"
                           >
-                            <RefreshCw className={`w-4 h-4 ${reanalyzingId === resume.id ? 'animate-spin' : ''}`} />
+                            <RefreshCw
+                              className={`w-4 h-4 ${reanalyzingId === resume.id ? 'animate-spin' : ''}`}
+                            />
                           </button>
                         )}
                         {/* 删除按钮 */}

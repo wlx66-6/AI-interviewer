@@ -5,11 +5,25 @@
 
 plugins {
     id 'java'
+    id 'jacoco'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.spotless)
 }
 
-group = 'com.interview'
+// 代码风格强制：java 去尾随空格 / 补文件末换行 / 清理未使用导入 / 规整注解顺序
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        trimTrailingWhitespace()
+        endWithNewline()
+        removeUnusedImports()
+        formatAnnotations()
+        importOrder('ai.interviewer', 'org', 'com', 'jakarta', 'java', 'javax', '\\#')
+    }
+}
+
+group = 'ai.interviewer'
 version = '0.0.1-SNAPSHOT'
 
 repositories {
@@ -113,6 +127,15 @@ tasks.named('test') {
         excludeTags 'rag-eval', 'voice-context-eval'
     }
     jvmArgs '--enable-native-access=ALL-UNNAMED'
+}
+
+// 单测覆盖率：`./gradlew :app:test :app:jacocoTestReport`
+// HTML 报告在 app/build/reports/jacoco/test/html/index.html；同时产出 xml/csv 便于脚本读取
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+        csv.required = true
+    }
 }
 
 tasks.register('voiceContextEvaluation', Test) {

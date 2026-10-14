@@ -5,6 +5,8 @@ export const ROUTES = {
   resumeUpload: '/upload',
   resumeHistory: '/history',
   knowledgebaseUpload: '/knowledgebase/upload',
+  tokenUsage: '/token-usage',
+  ragEval: '/rag-eval',
 } as const;
 
 export const ROUTE_PATTERNS = {

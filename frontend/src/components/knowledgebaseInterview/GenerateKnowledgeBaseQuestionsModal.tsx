@@ -71,7 +71,7 @@ export default function GenerateKnowledgeBaseQuestionsModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
@@ -91,32 +91,44 @@ export default function GenerateKnowledgeBaseQuestionsModal({
 
               <div className="px-6 py-5 space-y-4">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  基于知识库 <span className="font-semibold text-slate-700 dark:text-slate-200">{knowledgeBaseName}</span> 的内容，
+                  基于知识库{' '}
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    {knowledgeBaseName}
+                  </span>{' '}
+                  的内容，
                   按难度和方向生成草稿题。面试方向由模型基于知识库内容自动归类，并优先复用已有方向。
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">难度</span>
+                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                      难度
+                    </span>
                     <select
                       value={difficulty}
-                      onChange={event => setDifficulty(event.target.value)}
+                      onChange={(event) => setDifficulty(event.target.value)}
                       className={INPUT_CLASS}
                     >
-                      {DIFFICULTY_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                      {DIFFICULTY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
                       ))}
                     </select>
                   </label>
                   <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">题量</span>
+                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                      题量
+                    </span>
                     <select
                       value={questionCount}
-                      onChange={event => setQuestionCount(parseInt(event.target.value, 10))}
+                      onChange={(event) => setQuestionCount(parseInt(event.target.value, 10))}
                       className={INPUT_CLASS}
                     >
-                      {GENERATE_COUNT_OPTIONS.map(count => (
-                        <option key={count} value={count}>{count} 题</option>
+                      {GENERATE_COUNT_OPTIONS.map((count) => (
+                        <option key={count} value={count}>
+                          {count} 题
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -129,11 +141,13 @@ export default function GenerateKnowledgeBaseQuestionsModal({
                     </span>
                     <select
                       value={categoryLimit}
-                      onChange={event => setCategoryLimit(parseInt(event.target.value, 10))}
+                      onChange={(event) => setCategoryLimit(parseInt(event.target.value, 10))}
                       className={INPUT_CLASS}
                     >
-                      {CATEGORY_LIMIT_OPTIONS.map(count => (
-                        <option key={count} value={count}>{count} 个</option>
+                      {CATEGORY_LIMIT_OPTIONS.map((count) => (
+                        <option key={count} value={count}>
+                          {count} 个
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -143,11 +157,13 @@ export default function GenerateKnowledgeBaseQuestionsModal({
                     </span>
                     <select
                       value={followUpCount}
-                      onChange={event => setFollowUpCount(parseInt(event.target.value, 10))}
+                      onChange={(event) => setFollowUpCount(parseInt(event.target.value, 10))}
                       className={INPUT_CLASS}
                     >
-                      {FOLLOW_UP_COUNT_OPTIONS.map(count => (
-                        <option key={count} value={count}>{count} 个</option>
+                      {FOLLOW_UP_COUNT_OPTIONS.map((count) => (
+                        <option key={count} value={count}>
+                          {count} 个
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -167,13 +183,19 @@ export default function GenerateKnowledgeBaseQuestionsModal({
                 </button>
                 <motion.button
                   type="button"
-                  onClick={() => onSubmit({ difficulty, questionCount, followUpCount, categoryLimit })}
+                  onClick={() =>
+                    onSubmit({ difficulty, questionCount, followUpCount, categoryLimit })
+                  }
                   disabled={submitting}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="px-5 py-2.5 inline-flex items-center gap-2 text-white rounded-xl font-semibold shadow-lg bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
                   {submitting ? '提交中…' : '开始生成'}
                 </motion.button>
               </div>

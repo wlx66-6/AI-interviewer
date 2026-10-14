@@ -1,7 +1,11 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { EvaluationStatusResponse, VoiceEvaluationDetail, voiceInterviewApi } from '../api/voiceInterview';
+import {
+  EvaluationStatusResponse,
+  VoiceEvaluationDetail,
+  voiceInterviewApi,
+} from '../api/voiceInterview';
 import InterviewDetailPanel from '../components/InterviewDetailPanel';
 import type { InterviewDetail } from '../api/history';
 import { getVoiceEvaluationPresentation } from './voiceEvaluationStatus.ts';
@@ -52,7 +56,7 @@ export default function VoiceInterviewEvaluationPage() {
     setEvaluateStatus(status);
     setPresentationNow(Date.now());
     setEvaluateStatusUpdatedAt(
-      current => response.evaluateStatusUpdatedAt ?? current ?? new Date().toISOString(),
+      (current) => response.evaluateStatusUpdatedAt ?? current ?? new Date().toISOString(),
     );
 
     if (status === 'COMPLETED' && response.evaluation) {
@@ -80,7 +84,7 @@ export default function VoiceInterviewEvaluationPage() {
         setEvaluateStatus(status);
         setPresentationNow(Date.now());
         setEvaluateStatusUpdatedAt(
-          current => response.evaluateStatusUpdatedAt ?? current ?? new Date().toISOString(),
+          (current) => response.evaluateStatusUpdatedAt ?? current ?? new Date().toISOString(),
         );
 
         if (status === 'COMPLETED' && response.evaluation) {
@@ -130,7 +134,7 @@ export default function VoiceInterviewEvaluationPage() {
       completedAt: '',
       strengths: evaluation.strengths,
       improvements: evaluation.improvements,
-      answers: evaluation.answers.map(a => ({
+      answers: evaluation.answers.map((a) => ({
         questionIndex: a.questionIndex,
         question: a.question,
         category: a.category,
@@ -145,11 +149,12 @@ export default function VoiceInterviewEvaluationPage() {
   }, [evaluation, sessionId]);
 
   const evaluationPresentation = useMemo(
-    () => getVoiceEvaluationPresentation({
-      status: evaluateStatus,
-      statusUpdatedAt: evaluateStatusUpdatedAt,
-      now: presentationNow,
-    }),
+    () =>
+      getVoiceEvaluationPresentation({
+        status: evaluateStatus,
+        statusUpdatedAt: evaluateStatusUpdatedAt,
+        now: presentationNow,
+      }),
     [evaluateStatus, evaluateStatusUpdatedAt, presentationNow],
   );
 
@@ -168,9 +173,7 @@ export default function VoiceInterviewEvaluationPage() {
           <p className="text-lg font-medium text-slate-700 dark:text-slate-200">
             {evaluationPresentation.title}
           </p>
-          <p className="text-slate-400 text-sm mt-2">
-            {evaluationPresentation.description}
-          </p>
+          <p className="text-slate-400 text-sm mt-2">{evaluationPresentation.description}</p>
           <div className="flex items-center gap-3 justify-center mt-6">
             {evaluationPresentation.retryable && (
               <button

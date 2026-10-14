@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react';
-// @ts-ignore - vad is loaded via script tag
 import { Mic, MicOff } from 'lucide-react';
 
 // Declare global vad object (loaded via script tag in index.html)
@@ -58,7 +57,7 @@ export default function AudioRecorder({
       try {
         vadRef.current.pause();
         vadRef.current.destroy?.();
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
       vadRef.current = null;
@@ -73,7 +72,7 @@ export default function AudioRecorder({
       try {
         workletNodeRef.current.port.onmessage = null;
         workletNodeRef.current.disconnect();
-      } catch (e) {
+      } catch {
         // Ignore disconnect errors
       }
       workletNodeRef.current = null;
@@ -82,7 +81,7 @@ export default function AudioRecorder({
     if (gainNodeRef.current) {
       try {
         gainNodeRef.current.disconnect();
-      } catch (e) {
+      } catch {
         // Ignore disconnect errors
       }
       gainNodeRef.current = null;
@@ -91,21 +90,21 @@ export default function AudioRecorder({
     if (analyserRef.current) {
       try {
         analyserRef.current.disconnect();
-      } catch (e) {
+      } catch {
         // Ignore disconnect errors
       }
       analyserRef.current = null;
     }
 
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
 
     if (audioContextRef.current) {
       try {
         audioContextRef.current.close();
-      } catch (e) {
+      } catch {
         // Ignore close errors
       }
       audioContextRef.current = null;
@@ -156,7 +155,7 @@ export default function AudioRecorder({
 
       // Check if unmounted during async operation
       if (!mountedRef.current) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         startingRef.current = false;
         return;
       }
@@ -259,7 +258,6 @@ export default function AudioRecorder({
       if (mountedRef.current) {
         onRecordingChange(true);
       }
-
     } catch (error) {
       startingRef.current = false;
       cleanupRecordingResources(mountedRef.current);
@@ -333,9 +331,10 @@ export default function AudioRecorder({
           relative z-10 w-16 h-16 rounded-full flex items-center justify-center
           transition-all duration-300 shadow-xl
           ${disabled && !isRecording ? 'opacity-50 cursor-not-allowed shadow-none' : ''}
-          ${isRecording
-            ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/40'
-            : 'bg-slate-700 hover:bg-slate-600 shadow-slate-900/50'
+          ${
+            isRecording
+              ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/40'
+              : 'bg-slate-700 hover:bg-slate-600 shadow-slate-900/50'
           }
         `}
         title={disabled && !isRecording ? '语音识别准备中' : isRecording ? '停止录音' : '开始说话'}

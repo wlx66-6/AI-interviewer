@@ -1,4 +1,10 @@
-import type { BatchUploadItem, BatchUploadStatus, FileSelectionResult, FileUploadPolicy, ProcessingStatus } from '../types/batchUpload';
+import type {
+  BatchUploadItem,
+  BatchUploadStatus,
+  FileSelectionResult,
+  FileUploadPolicy,
+  ProcessingStatus,
+} from '../types/batchUpload';
 
 export const MAX_BATCH_FILES = 10;
 export const MAX_CONCURRENT_UPLOADS = 2;
@@ -28,7 +34,10 @@ export function getFileIdentity(file: Pick<File, 'name' | 'size' | 'lastModified
   return `${file.name}:${file.size}:${file.lastModified}`;
 }
 
-export function validateUploadFile(file: Pick<File, 'name' | 'size'>, policy: FileUploadPolicy): string | null {
+export function validateUploadFile(
+  file: Pick<File, 'name' | 'size'>,
+  policy: FileUploadPolicy,
+): string | null {
   if (file.size <= 0) {
     return '文件为空';
   }
@@ -51,7 +60,7 @@ export function selectUploadFiles(
   policy: FileUploadPolicy,
   now = Date.now(),
 ): FileSelectionResult {
-  const identities = new Set(currentItems.map(item => getFileIdentity(item.file)));
+  const identities = new Set(currentItems.map((item) => getFileIdentity(item.file)));
   const accepted: BatchUploadItem[] = [];
   const rejected: string[] = [];
   let remainingSlots = Math.max(0, MAX_BATCH_FILES - currentItems.length);
@@ -81,9 +90,16 @@ export function selectUploadFiles(
   return { accepted, rejected };
 }
 
-export function normalizeProcessingStatus(status?: string, fallback: ProcessingStatus = 'PENDING'): ProcessingStatus {
-  return status === 'PENDING' || status === 'PROCESSING' || status === 'COMPLETED' || status === 'FAILED'
-    ? status : fallback;
+export function normalizeProcessingStatus(
+  status?: string,
+  fallback: ProcessingStatus = 'PENDING',
+): ProcessingStatus {
+  return status === 'PENDING' ||
+    status === 'PROCESSING' ||
+    status === 'COMPLETED' ||
+    status === 'FAILED'
+    ? status
+    : fallback;
 }
 
 export function toBatchUploadStatus(status: ProcessingStatus): BatchUploadStatus {
@@ -100,9 +116,8 @@ export function getUploadOutcome(
   const status = enqueueFailed ? 'FAILED' : processStatus;
   return {
     status: toBatchUploadStatus(status),
-    error: status === 'FAILED'
-      ? (enqueueFailed && message) || `${processLabel}失败，请重试`
-      : undefined,
+    error:
+      status === 'FAILED' ? (enqueueFailed && message) || `${processLabel}失败，请重试` : undefined,
     needsStatusRefresh: status === 'FAILED' && !enqueueFailed,
   };
 }
@@ -115,8 +130,9 @@ export function canRetryUpload(
   item: Pick<BatchUploadItem, 'status' | 'retryAvailableAt'>,
   now = Date.now(),
 ): boolean {
-  return item.status === 'UPLOAD_FAILED'
-    && (!item.retryAvailableAt || item.retryAvailableAt <= now);
+  return (
+    item.status === 'UPLOAD_FAILED' && (!item.retryAvailableAt || item.retryAvailableAt <= now)
+  );
 }
 
 export class RateLimitedUploadQueue {
@@ -160,7 +176,7 @@ export class RateLimitedUploadQueue {
     if (this.isIdle()) {
       return Promise.resolve();
     }
-    return new Promise(resolve => this.idleResolvers.push(resolve));
+    return new Promise((resolve) => this.idleResolvers.push(resolve));
   }
 
   dispose(): void {
@@ -169,7 +185,7 @@ export class RateLimitedUploadQueue {
       clearTimeout(this.startTimer);
       this.startTimer = null;
     }
-    this.pending.forEach(task => this.scheduledIds.delete(task.clientId));
+    this.pending.forEach((task) => this.scheduledIds.delete(task.clientId));
     this.pending.length = 0;
     this.resolveIdleIfNeeded();
   }
@@ -217,6 +233,6 @@ export class RateLimitedUploadQueue {
 
   private resolveIdleIfNeeded(): void {
     if (!this.isIdle()) return;
-    this.idleResolvers.splice(0).forEach(resolve => resolve());
+    this.idleResolvers.splice(0).forEach((resolve) => resolve());
   }
 }

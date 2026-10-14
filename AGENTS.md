@@ -32,9 +32,9 @@ docker compose -f docker-compose.dev.yml up -d
 
 ## Project Structure
 
-- `app/src/main/java/interview/guide/common/`: 通用能力，包括限流、AI 调用、异步模板、配置、异常、统一响应。
-- `app/src/main/java/interview/guide/infrastructure/`: 技术基础设施，包括文件、导出、Redis、MapStruct 映射。
-- `app/src/main/java/interview/guide/modules/`: 业务模块，每个模块自包含 MVC 分层。
+- `app/src/main/java/ai/interviewer/common/`: 通用能力，包括限流、AI 调用、异步模板、配置、异常、统一响应。
+- `app/src/main/java/ai/interviewer/infrastructure/`: 技术基础设施，包括文件、导出、Redis、MapStruct 映射。
+- `app/src/main/java/ai/interviewer/modules/`: 业务模块，每个模块自包含 MVC 分层。
 - `app/src/main/resources/prompts/`: StringTemplate Prompt 模板。
 - `frontend/src/`: React 前端页面、组件、API 客户端和类型定义。
 

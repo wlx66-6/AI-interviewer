@@ -34,13 +34,17 @@ export default function DeleteConfirmDialog({
   // 获取项目名称（支持 name、title、filename、sessionId 等字段）
   const getItemName = () => {
     if (!item) return '';
-    return item.name || item.title || item.filename || item.sessionId || (item.id ? `ID: ${item.id}` : '');
+    return (
+      item.name ||
+      item.title ||
+      item.filename ||
+      item.sessionId ||
+      (item.id ? `ID: ${item.id}` : '')
+    );
   };
 
   // 生成默认消息
-  const defaultMessage = item
-    ? `确定要删除${itemType}"${getItemName()}"吗？删除后无法恢复。`
-    : '';
+  const defaultMessage = item ? `确定要删除${itemType}"${getItemName()}"吗？删除后无法恢复。` : '';
 
   return (
     <ConfirmDialog
@@ -56,4 +60,3 @@ export default function DeleteConfirmDialog({
     />
   );
 }
-

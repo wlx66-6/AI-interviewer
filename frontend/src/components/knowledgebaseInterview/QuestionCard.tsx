@@ -1,19 +1,7 @@
 import { useState } from 'react';
-import {
-  Archive,
-  Check,
-  ChevronDown,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
-import type {
-  KnowledgeBaseQuestion,
-  KnowledgeBaseQuestionStatus,
-} from '../../api/knowledgebase';
-import {
-  getDifficultyLabel,
-  getStatusLabel,
-} from '../../constants/knowledgebaseInterview';
+import { Archive, Check, ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import type { KnowledgeBaseQuestion, KnowledgeBaseQuestionStatus } from '../../api/knowledgebase';
+import { getDifficultyLabel, getStatusLabel } from '../../constants/knowledgebaseInterview';
 import { getFollowUpQualityWarning } from './interviewCapacity';
 
 interface QuestionCardProps {
@@ -36,16 +24,18 @@ export default function QuestionCard({
   onDelete,
 }: QuestionCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const usableFollowUpCount = question.followUps
-    .filter(followUp => followUp.question?.trim())
-    .length;
-  const followUpQualityWarning =
-    getFollowUpQualityWarning(usableFollowUpCount, targetFollowUpCount);
+  const usableFollowUpCount = question.followUps.filter((followUp) =>
+    followUp.question?.trim(),
+  ).length;
+  const followUpQualityWarning = getFollowUpQualityWarning(
+    usableFollowUpCount,
+    targetFollowUpCount,
+  );
   const hasDetail = Boolean(
-    question.referenceAnswer
-      || question.keyPoints.length > 0
-      || question.scoringRubric
-      || question.followUps.length > 0
+    question.referenceAnswer ||
+    question.keyPoints.length > 0 ||
+    question.scoringRubric ||
+    question.followUps.length > 0,
   );
 
   return (
@@ -71,13 +61,11 @@ export default function QuestionCard({
             {question.category && <Badge>{question.category}</Badge>}
             <Badge>{getDifficultyLabel(question.difficulty)}</Badge>
             <Badge>{`${usableFollowUpCount} 个追问`}</Badge>
-            {followUpQualityWarning && (
-              <Badge tone="warning">{followUpQualityWarning}</Badge>
-            )}
+            {followUpQualityWarning && <Badge tone="warning">{followUpQualityWarning}</Badge>}
           </div>
           <button
             type="button"
-            onClick={() => hasDetail && setExpanded(prev => !prev)}
+            onClick={() => hasDetail && setExpanded((prev) => !prev)}
             className={`block w-full text-left ${hasDetail ? 'cursor-pointer' : 'cursor-default'}`}
           >
             <h3 className="font-semibold text-slate-900 dark:text-white leading-relaxed">
@@ -92,10 +80,12 @@ export default function QuestionCard({
           {hasDetail && (
             <button
               type="button"
-              onClick={() => setExpanded(prev => !prev)}
+              onClick={() => setExpanded((prev) => !prev)}
               className="mt-2 inline-flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600"
             >
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+              />
               {expanded ? '收起详情' : '查看参考答案与追问'}
             </button>
           )}
@@ -109,10 +99,15 @@ export default function QuestionCard({
               )}
               {question.keyPoints.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">评分要点</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    评分要点
+                  </p>
                   <ul className="space-y-1">
                     {question.keyPoints.map((point, idx) => (
-                      <li key={idx} className="text-sm text-slate-700 dark:text-slate-200 flex gap-2">
+                      <li
+                        key={idx}
+                        className="text-sm text-slate-700 dark:text-slate-200 flex gap-2"
+                      >
                         <span className="text-primary-500 shrink-0">•</span>
                         <span>{point}</span>
                       </li>
@@ -130,10 +125,7 @@ export default function QuestionCard({
                   </p>
                   <div className="space-y-2">
                     {question.followUps.map((followUp, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-lg bg-slate-50 dark:bg-slate-900 px-3 py-2"
-                      >
+                      <div key={idx} className="rounded-lg bg-slate-50 dark:bg-slate-900 px-3 py-2">
                         <p className="text-sm font-medium text-slate-800 dark:text-white">
                           {idx + 1}. {followUp.question}
                         </p>
@@ -160,18 +152,12 @@ export default function QuestionCard({
             <Pencil className="w-4 h-4" />
           </IconButton>
           {question.status !== 'ACTIVE' && (
-            <IconButton
-              title="启用"
-              onClick={() => onUpdateStatus(question.id, 'ACTIVE')}
-            >
+            <IconButton title="启用" onClick={() => onUpdateStatus(question.id, 'ACTIVE')}>
               <Check className="w-4 h-4" />
             </IconButton>
           )}
           {question.status !== 'ARCHIVED' && (
-            <IconButton
-              title="归档"
-              onClick={() => onUpdateStatus(question.id, 'ARCHIVED')}
-            >
+            <IconButton title="归档" onClick={() => onUpdateStatus(question.id, 'ARCHIVED')}>
               <Archive className="w-4 h-4" />
             </IconButton>
           )}
@@ -184,21 +170,12 @@ export default function QuestionCard({
   );
 }
 
-function Badge({
-  children,
-  tone = 'default',
-}: {
-  children: string;
-  tone?: 'default' | 'warning';
-}) {
-  const colorClass = tone === 'warning'
-    ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300';
-  return (
-    <span className={`px-2 py-0.5 rounded text-xs ${colorClass}`}>
-      {children}
-    </span>
-  );
+function Badge({ children, tone = 'default' }: { children: string; tone?: 'default' | 'warning' }) {
+  const colorClass =
+    tone === 'warning'
+      ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+      : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300';
+  return <span className={`px-2 py-0.5 rounded text-xs ${colorClass}`}>{children}</span>;
 }
 
 function DetailSection({ title, body }: { title: string; body: string }) {

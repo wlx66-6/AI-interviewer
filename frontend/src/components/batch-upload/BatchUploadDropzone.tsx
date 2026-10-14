@@ -61,12 +61,14 @@ export default function BatchUploadDropzone({
           className="sr-only"
           aria-label={`选择${entityLabel}文件`}
           type="file"
-          accept={policy.extensions.map(extension => `.${extension}`).join(',')}
+          accept={policy.extensions.map((extension) => `.${extension}`).join(',')}
           multiple
           disabled={full}
           onChange={handleFileChange}
         />
-        <Upload className={`mx-auto mb-4 h-12 w-12 ${dragOver ? 'text-primary-500' : 'text-slate-400'}`} />
+        <Upload
+          className={`mx-auto mb-4 h-12 w-12 ${dragOver ? 'text-primary-500' : 'text-slate-400'}`}
+        />
         <p className="mb-2 text-lg font-semibold text-slate-800 dark:text-slate-100">
           点击选择或拖拽多个文件到这里
         </p>

@@ -27,7 +27,7 @@ export interface QuestionFormState {
 }
 
 export function emptyQuestionForm(
-  defaults?: Partial<Pick<QuestionFormState, 'difficulty' | 'category'>>
+  defaults?: Partial<Pick<QuestionFormState, 'difficulty' | 'category'>>,
 ): QuestionFormState {
   return {
     difficulty: defaults?.difficulty || 'mid',
@@ -45,7 +45,10 @@ export function emptyQuestionForm(
 }
 
 function linesToArray(value: string): string[] {
-  return value.split('\n').map(item => item.trim()).filter(Boolean);
+  return value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function arrayToLines(values?: string[]): string {
@@ -54,22 +57,31 @@ function arrayToLines(values?: string[]): string {
 
 function followUpsToText(followUps: KnowledgeBaseQuestionFollowUp[]): string {
   return followUps
-    .map(item => [
-      item.question,
-      item.referenceAnswer || '',
-      (item.keyPoints || []).join(','),
-      item.scoringRubric || '',
-    ].join(' | '))
+    .map((item) =>
+      [
+        item.question,
+        item.referenceAnswer || '',
+        (item.keyPoints || []).join(','),
+        item.scoringRubric || '',
+      ].join(' | '),
+    )
     .join('\n');
 }
 
 function textToFollowUps(value: string): KnowledgeBaseQuestionFollowUp[] {
-  return linesToArray(value).map(line => {
-    const [question, referenceAnswer, keyPoints, scoringRubric] = line.split('|').map(item => item.trim());
+  return linesToArray(value).map((line) => {
+    const [question, referenceAnswer, keyPoints, scoringRubric] = line
+      .split('|')
+      .map((item) => item.trim());
     return {
       question,
       referenceAnswer: referenceAnswer || null,
-      keyPoints: keyPoints ? keyPoints.split(',').map(item => item.trim()).filter(Boolean) : [],
+      keyPoints: keyPoints
+        ? keyPoints
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [],
       scoringRubric: scoringRubric || null,
     };
   });
@@ -143,8 +155,12 @@ export default function QuestionFormDrawer({
       >
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-slate-900 dark:text-white">{editing ? '编辑题目' : '新增题目'}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">维护题干、答案、评分规则和追问</p>
+            <h2 className="font-bold text-slate-900 dark:text-white">
+              {editing ? '编辑题目' : '新增题目'}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              维护题干、答案、评分规则和追问
+            </p>
           </div>
           <button
             type="button"
@@ -159,16 +175,30 @@ export default function QuestionFormDrawer({
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="难度">
-              <select value={form.difficulty} onChange={event => onChange({ ...form, difficulty: event.target.value })} className={INPUT_CLASS}>
-                {DIFFICULTY_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+              <select
+                value={form.difficulty}
+                onChange={(event) => onChange({ ...form, difficulty: event.target.value })}
+                className={INPUT_CLASS}
+              >
+                {DIFFICULTY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </Field>
             <Field label="状态">
-              <select value={form.status} onChange={event => onChange({ ...form, status: event.target.value as KnowledgeBaseQuestionStatus })} className={INPUT_CLASS}>
-                {STATUS_OPTIONS.filter(option => option.value).map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+              <select
+                value={form.status}
+                onChange={(event) =>
+                  onChange({ ...form, status: event.target.value as KnowledgeBaseQuestionStatus })
+                }
+                className={INPUT_CLASS}
+              >
+                {STATUS_OPTIONS.filter((option) => option.value).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -177,13 +207,13 @@ export default function QuestionFormDrawer({
             <input
               value={form.category}
               list="knowledge-base-question-category-options"
-              onChange={event => onChange({ ...form, category: event.target.value })}
+              onChange={(event) => onChange({ ...form, category: event.target.value })}
               className={INPUT_CLASS}
               placeholder="例如 整洁架构 / Redis / JVM 调优"
             />
             {categoryOptions.length > 0 && (
               <datalist id="knowledge-base-question-category-options">
-                {categoryOptions.map(category => (
+                {categoryOptions.map((category) => (
                   <option key={category} value={category} />
                 ))}
               </datalist>
@@ -193,29 +223,61 @@ export default function QuestionFormDrawer({
             </p>
           </Field>
           <Field label="题干">
-            <textarea value={form.question} onChange={event => onChange({ ...form, question: event.target.value })} className={`${INPUT_CLASS} min-h-24 resize-y`} />
+            <textarea
+              value={form.question}
+              onChange={(event) => onChange({ ...form, question: event.target.value })}
+              className={`${INPUT_CLASS} min-h-24 resize-y`}
+            />
           </Field>
           <Field label="参考答案">
-            <textarea value={form.referenceAnswer} onChange={event => onChange({ ...form, referenceAnswer: event.target.value })} className={`${INPUT_CLASS} min-h-28 resize-y`} />
+            <textarea
+              value={form.referenceAnswer}
+              onChange={(event) => onChange({ ...form, referenceAnswer: event.target.value })}
+              className={`${INPUT_CLASS} min-h-28 resize-y`}
+            />
           </Field>
           <Field label="评分要点（每行一条）">
-            <textarea value={form.keyPoints} onChange={event => onChange({ ...form, keyPoints: event.target.value })} className={`${INPUT_CLASS} min-h-20 resize-y`} />
+            <textarea
+              value={form.keyPoints}
+              onChange={(event) => onChange({ ...form, keyPoints: event.target.value })}
+              className={`${INPUT_CLASS} min-h-20 resize-y`}
+            />
           </Field>
           <Field label="评分规则">
-            <textarea value={form.scoringRubric} onChange={event => onChange({ ...form, scoringRubric: event.target.value })} className={`${INPUT_CLASS} min-h-20 resize-y`} />
+            <textarea
+              value={form.scoringRubric}
+              onChange={(event) => onChange({ ...form, scoringRubric: event.target.value })}
+              className={`${INPUT_CLASS} min-h-20 resize-y`}
+            />
           </Field>
           <Field label="追问（每行：题干 | 参考答案 | 要点1,要点2 | 评分规则）">
-            <textarea value={form.followUps} onChange={event => onChange({ ...form, followUps: event.target.value })} className={`${INPUT_CLASS} min-h-24 resize-y`} />
+            <textarea
+              value={form.followUps}
+              onChange={(event) => onChange({ ...form, followUps: event.target.value })}
+              className={`${INPUT_CLASS} min-h-24 resize-y`}
+            />
           </Field>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 px-5 py-4 flex items-center justify-end gap-3">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
             取消
           </button>
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
             保存
           </button>
         </div>
@@ -227,7 +289,9 @@ export default function QuestionFormDrawer({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">{label}</span>
+      <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+        {label}
+      </span>
       {children}
     </label>
   );

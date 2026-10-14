@@ -6,11 +6,11 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: interview-postgres
+    container_name: ai-interviewer-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
-      POSTGRES_DB: ${POSTGRES_DB:-interview_guide}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_interviewer}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -24,7 +24,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: interview-redis
+    container_name: ai-interviewer-redis
     ports:
       - "6379:6379"
     volumes:
@@ -37,7 +37,7 @@ services:
 
   rustfs:
     image: rustfs/rustfs:1.0.0-rc.6
-    container_name: interview-rustfs
+    container_name: ai-interviewer-rustfs
     command: ["/data"]
     environment:
       RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
@@ -56,8 +56,9 @@ services:
       timeout: 3s
       retries: 5
 
-# 首次启动后，浏览器访问 http://localhost:9001
-# 使用 ${RUSTFS_ACCESS_KEY} / ${RUSTFS_SECRET_KEY} 登录，手动创建名为 interview-guide 的 bucket
+  # RustFS 控制台：http://localhost:9001（用 RUSTFS_ACCESS_KEY / RUSTFS_SECRET_KEY 登录）
+# bucket 无需手动创建：应用启动时 FileStorageService 会检查并自动创建 ai-interviewer
+# （app.storage.auto-create-bucket=true，见 application.yml）；控制台只用于查看与排查。
 
 volumes:
   postgres_data:

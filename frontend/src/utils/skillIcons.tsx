@@ -1,11 +1,5 @@
 import type { IconType } from 'react-icons';
-import {
-  SiOpenjdk,
-  SiReact,
-  SiPython,
-  SiBytedance,
-  SiAlibabadotcom,
-} from 'react-icons/si';
+import { SiOpenjdk, SiReact, SiPython, SiBytedance, SiAlibabadotcom } from 'react-icons/si';
 import {
   TbMathFunction,
   TbTopologyStarRing3,
@@ -21,15 +15,15 @@ import {
  */
 const SKILL_ICON_MAP: Record<string, IconType> = {
   'java-backend': SiOpenjdk,
-  'frontend': SiReact,
+  frontend: SiReact,
   'python-backend': SiPython,
   'bytedance-backend': SiBytedance,
   'ali-backend': SiAlibabadotcom,
-  'algorithm': TbMathFunction,
+  algorithm: TbMathFunction,
   'system-design': TbTopologyStarRing3,
   'test-development': TbTestPipe,
   'ai-agent-dev': TbRobot,
-  'custom': TbSparkles,
+  custom: TbSparkles,
 };
 
 /**

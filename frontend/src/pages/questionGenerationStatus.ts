@@ -1,7 +1,4 @@
-import type {
-  QuestionGenStatus,
-  QuestionGenStatusResponse,
-} from '../api/knowledgebase';
+import type { QuestionGenStatus, QuestionGenStatusResponse } from '../api/knowledgebase';
 
 export interface QuestionGenerationNotice {
   tone: 'info' | 'success' | 'warning' | 'error';
@@ -11,7 +8,8 @@ export interface QuestionGenerationNotice {
 type NoticeSource = Pick<
   QuestionGenStatusResponse,
   'questionGenStatus' | 'savedCount' | 'skippedCount'
-> & Partial<Pick<QuestionGenStatusResponse, 'message' | 'error'>>;
+> &
+  Partial<Pick<QuestionGenStatusResponse, 'message' | 'error'>>;
 
 export function isQuestionGenerationActive(status?: QuestionGenStatus | null): boolean {
   return status === 'QUEUED' || status === 'PROCESSING';
@@ -20,16 +18,12 @@ export function isQuestionGenerationActive(status?: QuestionGenStatus | null): b
 export function shouldRefreshGeneratedQuestions(
   previousStatus: QuestionGenStatus | null | undefined,
   nextStatus: QuestionGenStatus,
-  sameTask: boolean
+  sameTask: boolean,
 ): boolean {
-  return sameTask
-    && isQuestionGenerationActive(previousStatus)
-    && nextStatus === 'COMPLETED';
+  return sameTask && isQuestionGenerationActive(previousStatus) && nextStatus === 'COMPLETED';
 }
 
-export function getQuestionGenerationNotice(
-  status: NoticeSource
-): QuestionGenerationNotice | null {
+export function getQuestionGenerationNotice(status: NoticeSource): QuestionGenerationNotice | null {
   switch (status.questionGenStatus) {
     case 'QUEUED':
       return { tone: 'info', text: '任务已提交，正在等待生成题目…' };
@@ -38,8 +32,8 @@ export function getQuestionGenerationNotice(
     case 'COMPLETED':
       return {
         tone: status.skippedCount > 0 ? 'warning' : 'success',
-        text: status.message
-          || `已生成 ${status.savedCount} 道题，跳过 ${status.skippedCount} 道题`,
+        text:
+          status.message || `已生成 ${status.savedCount} 道题，跳过 ${status.skippedCount} 道题`,
       };
     case 'FAILED':
       return { tone: 'error', text: '题目生成失败，请稍后重试' };

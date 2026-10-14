@@ -30,9 +30,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function isResult(value: unknown): value is Result {
-  return isRecord(value)
-    && typeof value.code === 'number'
-    && typeof value.message === 'string';
+  return isRecord(value) && typeof value.code === 'number' && typeof value.message === 'string';
 }
 
 export function getResultError(value: unknown): Error | null {
@@ -58,9 +56,7 @@ function parseResultText(text: string): Result | null {
 
 function shouldTryParseBlob(blob: Blob): boolean {
   const type = blob.type.toLowerCase();
-  return type.includes('json')
-    || type.startsWith('text/')
-    || blob.size <= RESULT_BLOB_PARSE_LIMIT;
+  return type.includes('json') || type.startsWith('text/') || blob.size <= RESULT_BLOB_PARSE_LIMIT;
 }
 
 export async function parseResultPayload(payload: unknown): Promise<Result | null> {
@@ -89,9 +85,11 @@ export async function resolveBlobDownload(blob: Blob): Promise<Blob> {
     throw new Error(result.message || '文件下载失败');
   }
 
-  throw new Error(result.message && result.message !== 'success'
-    ? result.message
-    : '文件下载失败：服务端未返回文件内容');
+  throw new Error(
+    result.message && result.message !== 'success'
+      ? result.message
+      : '文件下载失败：服务端未返回文件内容',
+  );
 }
 
 async function getErrorFromResponseData(data: unknown): Promise<Error | null> {
@@ -128,7 +126,7 @@ instance.interceptors.response.use(
       // 失败：直接抛出 message
       return Promise.reject(new Error(result.message || '请求失败'));
     }
-    
+
     // 非 Result 格式，直接返回
     return response;
   },
@@ -142,9 +140,10 @@ instance.interceptors.response.use(
         return Promise.reject(responseError);
       }
       // 网关和 CORS 拒绝等错误可能不使用 Result，保留状态码便于定位。
-      const message = status === 403
-        ? '请求被服务端拒绝（403），请检查访问权限或跨域配置'
-        : `请求失败（HTTP ${status}），请稍后重试`;
+      const message =
+        status === 403
+          ? '请求被服务端拒绝（403），请检查访问权限或跨域配置'
+          : `请求失败（HTTP ${status}），请稍后重试`;
       return Promise.reject(new Error(message));
     }
 
@@ -152,10 +151,10 @@ instance.interceptors.response.use(
     // 对于文件上传，可能是网络超时或连接中断，但不一定是文件大小问题
     // 让后端返回真实的错误信息，而不是在这里假设
     const config = error.config;
-    const isUpload = config && (
-      config.url?.includes('/upload') ||
-      config.headers?.['Content-Type']?.toString().includes('multipart')
-    );
+    const isUpload =
+      config &&
+      (config.url?.includes('/upload') ||
+        config.headers?.['Content-Type']?.toString().includes('multipart'));
 
     if (isUpload) {
       // 文件上传失败且没有响应，可能是网络超时或连接中断
@@ -165,39 +164,41 @@ instance.interceptors.response.use(
 
     // 其他网络错误
     return Promise.reject(new Error('网络连接失败，请检查网络'));
-  }
+  },
 );
 
 export const request = {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return instance.get(url, config).then(res => res.data);
+    return instance.get(url, config).then((res) => res.data);
   },
 
   post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return instance.post(url, data, config).then(res => res.data);
+    return instance.post(url, data, config).then((res) => res.data);
   },
 
   put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return instance.put(url, data, config).then(res => res.data);
+    return instance.put(url, data, config).then((res) => res.data);
   },
 
   patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    return instance.patch(url, data, config).then(res => res.data);
+    return instance.patch(url, data, config).then((res) => res.data);
   },
 
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return instance.delete(url, config).then(res => res.data);
+    return instance.delete(url, config).then((res) => res.data);
   },
 
   /**
    * 文件上传
    */
   upload<T>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
-    return instance.post(url, formData, {
-      timeout: 300000, // 5分钟，与Nginx proxy_read_timeout对齐
-      headers: { 'Content-Type': 'multipart/form-data' },
-      ...config,
-    }).then(res => res.data);
+    return instance
+      .post(url, formData, {
+        timeout: 300000, // 5分钟，与Nginx proxy_read_timeout对齐
+        headers: { 'Content-Type': 'multipart/form-data' },
+        ...config,
+      })
+      .then((res) => res.data);
   },
 
   /**

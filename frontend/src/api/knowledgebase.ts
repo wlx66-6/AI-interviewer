@@ -54,7 +54,7 @@ export interface UploadKnowledgeBaseResponse {
 }
 
 export interface QueryRequest {
-  knowledgeBaseIds: number[];  // 支持多个知识库
+  knowledgeBaseIds: number[]; // 支持多个知识库
   question: string;
 }
 
@@ -77,10 +77,10 @@ export interface KnowledgeBaseQuestion {
   id: number;
   knowledgeBaseId: number;
   knowledgeBaseName: string;
-  skillId: string;  // 后端兜底字段，固定为 knowledge-base，不再用于业务筛选
+  skillId: string; // 后端兜底字段，固定为 knowledge-base，不再用于业务筛选
   difficulty: string;
   type: string | null;
-  category: string;  // 面试方向，由模型生成或用户填写，用于筛选和开始面试
+  category: string; // 面试方向，由模型生成或用户填写，用于筛选和开始面试
   question: string;
   topicSummary: string | null;
   referenceAnswer: string | null;
@@ -149,7 +149,7 @@ export interface CategoryCount {
 
 export interface CreateKnowledgeBaseInterviewRequest {
   knowledgeBaseId: number;
-  category?: string;  // 不传则覆盖全部方向
+  category?: string; // 不传则覆盖全部方向
   difficulty?: string;
   mainQuestionCount: number;
   followUpCount: number;
@@ -186,7 +186,11 @@ export const knowledgeBaseApi = {
   /**
    * 上传知识库文件
    */
-  async uploadKnowledgeBase(file: File, name?: string, category?: string): Promise<UploadKnowledgeBaseResponse> {
+  async uploadKnowledgeBase(
+    file: File,
+    name?: string,
+    category?: string,
+  ): Promise<UploadKnowledgeBaseResponse> {
     const formData = new FormData();
     formData.append('file', file);
     if (name) {
@@ -208,7 +212,10 @@ export const knowledgeBaseApi = {
   /**
    * 获取所有知识库列表
    */
-  async getAllKnowledgeBases(sortBy?: SortOption, vectorStatus?: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'): Promise<KnowledgeBaseItem[]> {
+  async getAllKnowledgeBases(
+    sortBy?: SortOption,
+    vectorStatus?: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED',
+  ): Promise<KnowledgeBaseItem[]> {
     const params = new URLSearchParams();
     if (sortBy) {
       params.append('sortBy', sortBy);
@@ -217,7 +224,9 @@ export const knowledgeBaseApi = {
       params.append('vectorStatus', vectorStatus);
     }
     const queryString = params.toString();
-    return request.get<KnowledgeBaseItem[]>(`/api/knowledgebase/list${queryString ? `?${queryString}` : ''}`);
+    return request.get<KnowledgeBaseItem[]>(
+      `/api/knowledgebase/list${queryString ? `?${queryString}` : ''}`,
+    );
   },
 
   /**
@@ -247,7 +256,9 @@ export const knowledgeBaseApi = {
    * 根据分类获取知识库
    */
   async getByCategory(category: string): Promise<KnowledgeBaseItem[]> {
-    return request.get<KnowledgeBaseItem[]>(`/api/knowledgebase/category/${encodeURIComponent(category)}`);
+    return request.get<KnowledgeBaseItem[]>(
+      `/api/knowledgebase/category/${encodeURIComponent(category)}`,
+    );
   },
 
   /**
@@ -270,7 +281,9 @@ export const knowledgeBaseApi = {
    * 搜索知识库
    */
   async search(keyword: string): Promise<KnowledgeBaseItem[]> {
-    return request.get<KnowledgeBaseItem[]>(`/api/knowledgebase/search?keyword=${encodeURIComponent(keyword)}`);
+    return request.get<KnowledgeBaseItem[]>(
+      `/api/knowledgebase/search?keyword=${encodeURIComponent(keyword)}`,
+    );
   },
 
   // ========== 统计 ==========
@@ -295,23 +308,23 @@ export const knowledgeBaseApi = {
 
   async generateQuestions(
     id: number,
-    req: GenerateKnowledgeBaseQuestionsRequest
+    req: GenerateKnowledgeBaseQuestionsRequest,
   ): Promise<QuestionGenStatusResponse> {
     return request.post<QuestionGenStatusResponse>(
       `/api/knowledgebase/${id}/questions/generate`,
-      req
+      req,
     );
   },
 
   async getQuestionGenerationStatus(id: number): Promise<QuestionGenStatusResponse> {
     return request.get<QuestionGenStatusResponse>(
-      `/api/knowledgebase/${id}/questions/generation-status`
+      `/api/knowledgebase/${id}/questions/generation-status`,
     );
   },
 
   async listQuestions(
     id: number,
-    params?: ListKnowledgeBaseQuestionsParams
+    params?: ListKnowledgeBaseQuestionsParams,
   ): Promise<KnowledgeBaseQuestion[]> {
     const searchParams = new URLSearchParams();
     if (params) {
@@ -331,36 +344,40 @@ export const knowledgeBaseApi = {
 
   async createQuestion(
     id: number,
-    req: SaveKnowledgeBaseQuestionRequest
+    req: SaveKnowledgeBaseQuestionRequest,
   ): Promise<KnowledgeBaseQuestion> {
     return request.post<KnowledgeBaseQuestion>(`/api/knowledgebase/${id}/questions`, req);
   },
 
   async updateQuestion(
     id: number,
-    req: Partial<SaveKnowledgeBaseQuestionRequest>
+    req: Partial<SaveKnowledgeBaseQuestionRequest>,
   ): Promise<KnowledgeBaseQuestion> {
     return request.put<KnowledgeBaseQuestion>(`/api/knowledgebase/questions/${id}`, req);
   },
 
   async updateQuestionStatus(
     id: number,
-    status: KnowledgeBaseQuestionStatus
+    status: KnowledgeBaseQuestionStatus,
   ): Promise<KnowledgeBaseQuestion> {
-    return request.put<KnowledgeBaseQuestion>(`/api/knowledgebase/questions/${id}/status`, { status });
+    return request.put<KnowledgeBaseQuestion>(`/api/knowledgebase/questions/${id}/status`, {
+      status,
+    });
   },
 
   async deleteQuestion(id: number): Promise<void> {
     return request.delete(`/api/knowledgebase/questions/${id}`);
   },
 
-  async createInterviewSession(req: CreateKnowledgeBaseInterviewRequest): Promise<InterviewSession> {
+  async createInterviewSession(
+    req: CreateKnowledgeBaseInterviewRequest,
+  ): Promise<InterviewSession> {
     return request.post<InterviewSession>('/api/knowledgebase-interviews/sessions', req);
   },
 
   async getInterviewCapacity(
     id: number,
-    params: GetKnowledgeBaseInterviewCapacityParams
+    params: GetKnowledgeBaseInterviewCapacityParams,
   ): Promise<KnowledgeBaseInterviewCapacityResponse> {
     const searchParams = new URLSearchParams({
       difficulty: params.difficulty,
@@ -370,7 +387,7 @@ export const knowledgeBaseApi = {
       searchParams.set('category', params.category.trim());
     }
     return request.get<KnowledgeBaseInterviewCapacityResponse>(
-      `/api/knowledgebase/${id}/interview-capacity?${searchParams.toString()}`
+      `/api/knowledgebase/${id}/interview-capacity?${searchParams.toString()}`,
     );
   },
 
@@ -391,7 +408,7 @@ export const knowledgeBaseApi = {
     req: QueryRequest,
     onMessage: (chunk: string) => void,
     onComplete: () => void,
-    onError: (error: Error) => void
+    onError: (error: Error) => void,
   ): Promise<void> {
     return streamSse({
       url: '/api/knowledgebase/query/stream',

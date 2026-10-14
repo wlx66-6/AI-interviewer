@@ -1,4 +1,13 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from 'react-router-dom';
 import Layout from './components/Layout';
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { historyApi, type InterviewDetail } from './api/history';
@@ -17,13 +26,19 @@ const KnowledgeBaseQueryPage = lazy(() => import('./pages/KnowledgeBaseQueryPage
 const KnowledgeBaseUploadPage = lazy(() => import('./pages/KnowledgeBaseUploadPage'));
 const KnowledgeBaseManagePage = lazy(() => import('./pages/KnowledgeBaseManagePage'));
 const KnowledgeBaseInterviewPage = lazy(() => import('./pages/KnowledgeBaseInterviewLandingPage'));
-const KnowledgeBaseInterviewQuestionsPage = lazy(() => import('./pages/KnowledgeBaseInterviewQuestionsPage'));
-const KnowledgeBaseInterviewSessionPage = lazy(() => import('./pages/KnowledgeBaseInterviewSessionPage'));
+const KnowledgeBaseInterviewQuestionsPage = lazy(
+  () => import('./pages/KnowledgeBaseInterviewQuestionsPage'),
+);
+const KnowledgeBaseInterviewSessionPage = lazy(
+  () => import('./pages/KnowledgeBaseInterviewSessionPage'),
+);
 const VoiceInterviewPage = lazy(() => import('./pages/VoiceInterviewPage'));
 const VoiceInterviewEvaluationPage = lazy(() => import('./pages/VoiceInterviewEvaluationPage'));
 const InterviewSchedulePage = lazy(() => import('./pages/InterviewSchedulePage'));
 const InterviewHubPage = lazy(() => import('./pages/InterviewHubPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const TokenUsagePage = lazy(() => import('./pages/TokenUsagePage'));
+const RagEvalReportPage = lazy(() => import('./pages/RagEvalReportPage'));
 const InterviewDetailPanel = lazy(() => import('./components/InterviewDetailPanel'));
 
 // Loading component
@@ -55,7 +70,9 @@ function HistoryListWrapper() {
 function ResumeDetailWrapper() {
   const { resumeId } = useParams<{ resumeId: string }>();
   const navigate = useNavigate();
-  const { openInterviewModalWithResume } = useOutletContext<{ openInterviewModalWithResume: (resumeId: number) => void }>();
+  const { openInterviewModalWithResume } = useOutletContext<{
+    openInterviewModalWithResume: (resumeId: number) => void;
+  }>();
 
   if (!resumeId) {
     return <Navigate to="/history" replace />;
@@ -114,12 +131,13 @@ function InterviewWrapper() {
       setLoading(false);
     } else if (effectiveResumeId) {
       // 如果没有，从API获取简历详情
-      historyApi.getResumeDetail(effectiveResumeId)
-        .then(resume => {
+      historyApi
+        .getResumeDetail(effectiveResumeId)
+        .then((resume) => {
           setResumeText(resume.resumeText);
           setLoading(false);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('获取简历文本失败', err);
           setLoading(false);
         });
@@ -223,17 +241,32 @@ function App() {
             <Route path="voice-interview" element={<VoiceInterviewPageWrapper />} />
 
             {/* 语音面试评估报告 */}
-            <Route path="voice-interview/:sessionId/evaluation" element={<VoiceInterviewEvaluationPage />} />
+            <Route
+              path="voice-interview/:sessionId/evaluation"
+              element={<VoiceInterviewEvaluationPage />}
+            />
 
             {/* 知识库管理 */}
             <Route path="knowledgebase" element={<KnowledgeBaseManagePageWrapper />} />
 
             {/* 知识库面试 */}
             <Route path="knowledgebase-interview" element={<KnowledgeBaseInterviewPage />} />
-            <Route path="knowledgebase-interview/:knowledgeBaseId/questions" element={<KnowledgeBaseInterviewQuestionsPage />} />
-            <Route path="knowledgebase-interview/:knowledgeBaseId/interviews" element={<KnowledgeBaseInterviewHistoryWrapper />} />
-            <Route path="knowledgebase-interview/:knowledgeBaseId/interviews/:sessionId" element={<InterviewDetailPageWrapper />} />
-            <Route path="knowledgebase-interview/:sessionId" element={<KnowledgeBaseInterviewSessionPage />} />
+            <Route
+              path="knowledgebase-interview/:knowledgeBaseId/questions"
+              element={<KnowledgeBaseInterviewQuestionsPage />}
+            />
+            <Route
+              path="knowledgebase-interview/:knowledgeBaseId/interviews"
+              element={<KnowledgeBaseInterviewHistoryWrapper />}
+            />
+            <Route
+              path="knowledgebase-interview/:knowledgeBaseId/interviews/:sessionId"
+              element={<InterviewDetailPageWrapper />}
+            />
+            <Route
+              path="knowledgebase-interview/:sessionId"
+              element={<KnowledgeBaseInterviewSessionPage />}
+            />
 
             {/* 知识库上传 */}
             <Route path="knowledgebase/upload" element={<KnowledgeBaseUploadPageWrapper />} />
@@ -244,10 +277,15 @@ function App() {
             {/* 设置 */}
             <Route path="settings" element={<SettingsPage />} />
 
+            {/* Token 用量统计 */}
+            <Route path={ROUTES.tokenUsage.slice(1)} element={<TokenUsagePage />} />
+
+            {/* RAG 检索质量评测报告 */}
+            <Route path={ROUTES.ragEval.slice(1)} element={<RagEvalReportPage />} />
+
             {/* 问答助手（知识库聊天） */}
             <Route path="knowledgebase/chat" element={<KnowledgeBaseQueryPageWrapper />} />
           </Route>
-
         </Routes>
       </Suspense>
     </BrowserRouter>
@@ -257,7 +295,9 @@ function App() {
 // 面试记录页面包装器
 function InterviewHistoryWrapper() {
   const navigate = useNavigate();
-  const { openInterviewModalWithResume } = useOutletContext<{ openInterviewModalWithResume: (resumeId: number) => void }>();
+  const { openInterviewModalWithResume } = useOutletContext<{
+    openInterviewModalWithResume: (resumeId: number) => void;
+  }>();
 
   const handleBack = () => {
     navigate('/history');
@@ -275,7 +315,14 @@ function InterviewHistoryWrapper() {
     navigate(ROUTES.interviewSession(sessionId));
   };
 
-  return <InterviewHistoryPage onBack={handleBack} onViewInterview={handleViewInterview} onRestartInterview={handleRestartInterview} onContinueInterview={handleContinueInterview} />;
+  return (
+    <InterviewHistoryPage
+      onBack={handleBack}
+      onViewInterview={handleViewInterview}
+      onRestartInterview={handleRestartInterview}
+      onContinueInterview={handleContinueInterview}
+    />
+  );
 }
 
 // 知识库面试记录页面包装器
@@ -327,8 +374,9 @@ function InterviewDetailPageWrapper() {
       navigate(backTarget);
       return;
     }
-    historyApi.getInterviewDetail(sessionId)
-      .then(detail => {
+    historyApi
+      .getInterviewDetail(sessionId)
+      .then((detail) => {
         setInterview(detail);
         setLoading(false);
       })
@@ -370,7 +418,12 @@ function InterviewDetailPageWrapper() {
           className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">

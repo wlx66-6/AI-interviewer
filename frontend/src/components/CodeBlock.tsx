@@ -4,7 +4,7 @@ import { Check, Copy } from 'lucide-react';
 
 // Lazy load SyntaxHighlighter
 const SyntaxHighlighter = lazy(() =>
-  import('react-syntax-highlighter/dist/esm/prism').then(module => ({ default: module.default }))
+  import('react-syntax-highlighter/dist/esm/prism').then((module) => ({ default: module.default })),
 );
 
 interface CodeBlockProps {
@@ -32,9 +32,7 @@ export default function CodeBlock({ language, children }: CodeBlockProps) {
     <div className="relative group my-3">
       {/* 语言标签和复制按钮 */}
       <div className="flex items-center justify-between px-4 py-2 bg-slate-700 rounded-t-xl border-b border-slate-600">
-        <span className="text-xs text-slate-400 font-mono">
-          {language || 'code'}
-        </span>
+        <span className="text-xs text-slate-400 font-mono">{language || 'code'}</span>
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
@@ -56,9 +54,9 @@ export default function CodeBlock({ language, children }: CodeBlockProps) {
 
       {/* 代码内容 */}
       <div className="bg-[#282c34] rounded-b-xl text-sm leading-6">
-        <Suspense fallback={
-          <div className="p-4 text-slate-400 font-mono text-xs">Loading code...</div>
-        }>
+        <Suspense
+          fallback={<div className="p-4 text-slate-400 font-mono text-xs">Loading code...</div>}
+        >
           <SyntaxHighlighter
             language={language || 'text'}
             style={oneDark}

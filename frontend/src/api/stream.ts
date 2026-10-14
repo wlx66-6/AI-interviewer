@@ -104,17 +104,16 @@ function getBusinessEventError(value: unknown): Error | null {
     return resultError;
   }
 
-  const marker = getStringField(value, 'type')
-    ?? getStringField(value, 'event')
-    ?? getStringField(value, 'status');
+  const marker =
+    getStringField(value, 'type') ??
+    getStringField(value, 'event') ??
+    getStringField(value, 'status');
   if (!marker || !['error', 'failed', 'failure'].includes(marker.toLowerCase())) {
     return null;
   }
 
   return new Error(
-    getStringField(value, 'message')
-      ?? getStringField(value, 'error')
-      ?? '请求失败'
+    getStringField(value, 'message') ?? getStringField(value, 'error') ?? '请求失败',
   );
 }
 
@@ -164,7 +163,7 @@ function processLine(line: string, options: StreamSseOptions): void {
 
 function flushLineBuffer(buffer: string, done: boolean, options: StreamSseOptions): string {
   const lines = buffer.split('\n');
-  const remaining = done ? '' : lines.pop() ?? '';
+  const remaining = done ? '' : (lines.pop() ?? '');
 
   for (const line of lines) {
     processLine(line, options);

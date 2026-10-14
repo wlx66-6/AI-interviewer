@@ -1,9 +1,7 @@
 import type { EvaluateStatus } from '../api/history';
 
 export type KnowledgeBaseInterviewCompletion =
-  | { kind: 'waiting' }
-  | { kind: 'completed'; path: string }
-  | { kind: 'failed' };
+  { kind: 'waiting' } | { kind: 'completed'; path: string } | { kind: 'failed' };
 
 export function resolveKnowledgeBaseInterviewCompletion(
   evaluateStatus: EvaluateStatus | undefined,

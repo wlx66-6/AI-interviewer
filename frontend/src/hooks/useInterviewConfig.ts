@@ -62,8 +62,8 @@ export function useInterviewConfig(options?: {
 
   const isCustomSkill = skillId === CUSTOM_SKILL_ID;
   const jdNeedsReparse = parsedCustomJdText.length > 0 && customJdText !== parsedCustomJdText;
-  const isCustomStartDisabled = isCustomSkill
-    && (customCategories.length === 0 || jdNeedsReparse || parsingJd);
+  const isCustomStartDisabled =
+    isCustomSkill && (customCategories.length === 0 || jdNeedsReparse || parsingJd);
 
   const loadSkills = async () => {
     setLoadingSkills(true);
@@ -115,23 +115,32 @@ export function useInterviewConfig(options?: {
       loadSkills();
       loadResumes();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoLoad, defaultMode, defaultResumeId]);
 
   return {
     // State
-    mode, setMode,
-    skillId, setSkillId,
-    difficulty, setDifficulty,
-    skills, setSkills,
+    mode,
+    setMode,
+    skillId,
+    setSkillId,
+    difficulty,
+    setDifficulty,
+    skills,
+    setSkills,
     loadingSkills,
-    showMore, setShowMore,
-    resumeId, setResumeId,
+    showMore,
+    setShowMore,
+    resumeId,
+    setResumeId,
     resumes,
-    questionCount, setQuestionCount,
-    plannedDuration, setPlannedDuration,
-    llmProvider, setLlmProvider,
-    customJdText, setCustomJdText,
+    questionCount,
+    setQuestionCount,
+    plannedDuration,
+    setPlannedDuration,
+    llmProvider,
+    setLlmProvider,
+    customJdText,
+    setCustomJdText,
     parsedCustomJdText,
     customCategories,
     parsingJd,
@@ -144,6 +153,8 @@ export function useInterviewConfig(options?: {
     handleParseJd,
     // Helpers
     getSkillIcon,
-    get selectedSkill() { return skills.find(s => s.id === skillId); },
+    get selectedSkill() {
+      return skills.find((s) => s.id === skillId);
+    },
   };
 }

@@ -20,11 +20,7 @@ export function calculatePercentage(score: number, maxScore: number): number {
  * @param targetMax 目标满分
  * @returns 归一化后的分数
  */
-export function normalizeScore(
-  score: number,
-  originalMax: number,
-  targetMax: number
-): number {
+export function normalizeScore(score: number, originalMax: number, targetMax: number): number {
   if (originalMax === 0) return 0;
   return (score / originalMax) * targetMax;
 }
@@ -42,10 +38,7 @@ function isDarkMode(): boolean {
  * @param thresholds 阈值配置，默认 [85, 70]
  * @returns Tailwind CSS 颜色类名
  */
-export function getScoreColor(
-  score: number,
-  thresholds: [number, number] = [80, 70]
-): string {
+export function getScoreColor(score: number, thresholds: [number, number] = [80, 70]): string {
   const dark = isDarkMode();
 
   if (dark) {
@@ -66,7 +59,7 @@ export function getScoreColor(
  */
 export function getScoreProgressColor(
   score: number,
-  thresholds: [number, number] = [80, 70]
+  thresholds: [number, number] = [80, 70],
 ): string {
   if (score >= thresholds[0]) return 'bg-emerald-500';
   if (score >= thresholds[1]) return 'bg-amber-500';
@@ -76,10 +69,7 @@ export function getScoreProgressColor(
 /**
  * 根据分数获取文本颜色类名
  */
-export function getScoreTextColor(
-  score: number,
-  thresholds: [number, number] = [80, 70]
-): string {
+export function getScoreTextColor(score: number, thresholds: [number, number] = [80, 70]): string {
   if (score >= thresholds[0]) return 'text-emerald-500';
   if (score >= thresholds[1]) return 'text-amber-500';
   return 'text-red-500';

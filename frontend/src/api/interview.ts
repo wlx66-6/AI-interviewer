@@ -5,7 +5,7 @@ import type {
   InterviewReport,
   InterviewSession,
   SubmitAnswerRequest,
-  SubmitAnswerResponse
+  SubmitAnswerResponse,
 } from '../types/interview';
 
 export interface TextSessionMeta {
@@ -65,7 +65,7 @@ export const interviewApi = {
       { questionIndex: req.questionIndex, answer: req.answer },
       {
         timeout: 180000, // 3分钟超时
-      }
+      },
     );
   },
 
@@ -94,10 +94,10 @@ export const interviewApi = {
    * 暂存答案（不进入下一题）
    */
   async saveAnswer(req: SubmitAnswerRequest): Promise<void> {
-    return request.put<void>(
-      `/api/interview/sessions/${req.sessionId}/answers`,
-      { questionIndex: req.questionIndex, answer: req.answer }
-    );
+    return request.put<void>(`/api/interview/sessions/${req.sessionId}/answers`, {
+      questionIndex: req.questionIndex,
+      answer: req.answer,
+    });
   },
 
   /**

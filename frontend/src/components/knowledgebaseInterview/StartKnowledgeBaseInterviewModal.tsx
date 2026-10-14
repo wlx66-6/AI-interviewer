@@ -13,13 +13,10 @@ import {
   INPUT_CLASS,
   MAIN_QUESTION_COUNT_OPTIONS,
 } from '../../constants/knowledgebaseInterview';
-import {
-  getSelectedCapacity,
-  getStrictCapacityMessage,
-} from './interviewCapacity';
+import { getSelectedCapacity, getStrictCapacityMessage } from './interviewCapacity';
 
 export interface StartInterviewConfig {
-  category: string;  // 空字符串表示覆盖全部方向
+  category: string; // 空字符串表示覆盖全部方向
   difficulty: string;
   mainQuestionCount: number;
   followUpCount: number;
@@ -48,8 +45,7 @@ export default function StartKnowledgeBaseInterviewModal({
   const [difficulty, setDifficulty] = useState(defaultDifficulty);
   const [mainQuestionCount, setMainQuestionCount] = useState(5);
   const [followUpCount, setFollowUpCount] = useState(1);
-  const [capacity, setCapacity] =
-    useState<KnowledgeBaseInterviewCapacityResponse | null>(null);
+  const [capacity, setCapacity] = useState<KnowledgeBaseInterviewCapacityResponse | null>(null);
   const [loadingCapacity, setLoadingCapacity] = useState(false);
   const [loadError, setLoadError] = useState('');
 
@@ -77,11 +73,11 @@ export default function StartKnowledgeBaseInterviewModal({
         difficulty,
         mainQuestionCount,
       })
-      .then(result => {
+      .then((result) => {
         if (cancelled) return;
         setCapacity(result);
       })
-      .catch(err => {
+      .catch((err) => {
         if (!cancelled) {
           setLoadError(err instanceof Error ? err.message : '加载面试容量失败');
         }
@@ -99,8 +95,8 @@ export default function StartKnowledgeBaseInterviewModal({
   const availableCount = selectedCapacity?.availableQuestionCount ?? 0;
   const canStart = selectedCapacity?.selectable === true && !loadingCapacity;
   const categoryOptions = capacity?.categories ?? [];
-  const selectedCategoryMissing = category
-    && !categoryOptions.some(option => option.category === category);
+  const selectedCategoryMissing =
+    category && !categoryOptions.some((option) => option.category === category);
 
   return (
     <AnimatePresence>
@@ -118,16 +114,19 @@ export default function StartKnowledgeBaseInterviewModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-2">
                   <Play className="w-5 h-5 text-primary-500" />
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">开始知识库面试</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      开始知识库面试
+                    </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      仅从 <span className="font-medium">{knowledgeBase?.name}</span> 的已启用题目抽题
+                      仅从 <span className="font-medium">{knowledgeBase?.name}</span>{' '}
+                      的已启用题目抽题
                     </p>
                   </div>
                 </div>
@@ -143,10 +142,12 @@ export default function StartKnowledgeBaseInterviewModal({
 
               <div className="px-6 py-5 space-y-4">
                 <label className="block">
-                  <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">面试方向</span>
+                  <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    面试方向
+                  </span>
                   <select
                     value={category}
-                    onChange={event => setCategory(event.target.value)}
+                    onChange={(event) => setCategory(event.target.value)}
                     className={INPUT_CLASS}
                     disabled={loadingCapacity}
                   >
@@ -154,7 +155,7 @@ export default function StartKnowledgeBaseInterviewModal({
                     {selectedCategoryMissing && (
                       <option value={category}>{category}（当前难度 0 题）</option>
                     )}
-                    {categoryOptions.map(item => (
+                    {categoryOptions.map((item) => (
                       <option key={item.category} value={item.category}>
                         {item.category}（{item.availableQuestionCount} 题）
                       </option>
@@ -164,47 +165,53 @@ export default function StartKnowledgeBaseInterviewModal({
 
                 <div className="grid grid-cols-3 gap-3">
                   <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">难度</span>
+                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                      难度
+                    </span>
                     <select
                       value={difficulty}
-                      onChange={event => setDifficulty(event.target.value)}
+                      onChange={(event) => setDifficulty(event.target.value)}
                       className={INPUT_CLASS}
                     >
-                      {DIFFICULTY_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                      {DIFFICULTY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
                       ))}
                     </select>
                   </label>
                   <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">主问题数</span>
+                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                      主问题数
+                    </span>
                     <select
                       value={mainQuestionCount}
-                      onChange={event => setMainQuestionCount(parseInt(event.target.value, 10))}
+                      onChange={(event) => setMainQuestionCount(parseInt(event.target.value, 10))}
                       className={INPUT_CLASS}
                     >
-                      {MAIN_QUESTION_COUNT_OPTIONS.map(count => (
-                        <option key={count} value={count}>{count} 道</option>
+                      {MAIN_QUESTION_COUNT_OPTIONS.map((count) => (
+                        <option key={count} value={count}>
+                          {count} 道
+                        </option>
                       ))}
                     </select>
                   </label>
                   <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">每题追问</span>
+                    <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                      每题追问
+                    </span>
                     <select
                       value={followUpCount}
-                      onChange={event => setFollowUpCount(parseInt(event.target.value, 10))}
+                      onChange={(event) => setFollowUpCount(parseInt(event.target.value, 10))}
                       className={INPUT_CLASS}
                     >
-                      {FOLLOW_UP_COUNT_OPTIONS.map(count => {
+                      {FOLLOW_UP_COUNT_OPTIONS.map((count) => {
                         const optionCapacity = getSelectedCapacity(followUpOptions, count);
                         const label = optionCapacity
                           ? `${count} 个（${optionCapacity.availableQuestionCount} 道题可用）`
                           : `${count} 个`;
                         return (
-                          <option
-                            key={count}
-                            value={count}
-                            disabled={!optionCapacity?.selectable}
-                          >
+                          <option key={count} value={count} disabled={!optionCapacity?.selectable}>
                             {label}
                           </option>
                         );
@@ -221,7 +228,9 @@ export default function StartKnowledgeBaseInterviewModal({
                   ) : (
                     <>
                       当前条件可用{' '}
-                      <span className={`font-bold ${canStart ? 'text-primary-600 dark:text-primary-400' : 'text-red-500'}`}>
+                      <span
+                        className={`font-bold ${canStart ? 'text-primary-600 dark:text-primary-400' : 'text-red-500'}`}
+                      >
                         {availableCount}
                       </span>{' '}
                       道主问题
@@ -230,7 +239,7 @@ export default function StartKnowledgeBaseInterviewModal({
                           {getStrictCapacityMessage(
                             followUpOptions,
                             followUpCount,
-                            mainQuestionCount
+                            mainQuestionCount,
                           )}
                         </span>
                       )}
@@ -258,13 +267,19 @@ export default function StartKnowledgeBaseInterviewModal({
                 </button>
                 <motion.button
                   type="button"
-                  onClick={() => onStart({ category, difficulty, mainQuestionCount, followUpCount })}
+                  onClick={() =>
+                    onStart({ category, difficulty, mainQuestionCount, followUpCount })
+                  }
                   disabled={!canStart || starting || loadingCapacity}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="px-5 py-2.5 inline-flex items-center gap-2 text-white rounded-xl font-semibold shadow-lg bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                  {starting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
                   {starting ? '创建中…' : '开始面试'}
                 </motion.button>
               </div>

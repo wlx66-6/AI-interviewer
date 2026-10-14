@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowDownUp, BookOpen, Database, Loader2, Plus, RefreshCw, Search } from 'lucide-react';
+import { knowledgeBaseApi, type KnowledgeBaseItem } from '../api/knowledgebase';
 import {
-  ArrowDownUp,
-  BookOpen,
-  Database,
-  Loader2,
-  Plus,
-  RefreshCw,
-  Search,
-} from 'lucide-react';
-import {
-  knowledgeBaseApi,
-  type KnowledgeBaseItem,
-} from '../api/knowledgebase';
-import { DEFAULT_DIFFICULTY, DEFAULT_CATEGORY_LIMIT, INPUT_CLASS } from '../constants/knowledgebaseInterview';
+  DEFAULT_DIFFICULTY,
+  DEFAULT_CATEGORY_LIMIT,
+  INPUT_CLASS,
+} from '../constants/knowledgebaseInterview';
 import StartKnowledgeBaseInterviewModal, {
   type StartInterviewConfig,
 } from '../components/knowledgebaseInterview/StartKnowledgeBaseInterviewModal';
@@ -49,7 +42,10 @@ export default function KnowledgeBaseInterviewLandingPage() {
   const loadKnowledgeBases = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await knowledgeBaseApi.getAllKnowledgeBases(sortKey === 'question' ? 'question' : 'time', 'COMPLETED');
+      const list = await knowledgeBaseApi.getAllKnowledgeBases(
+        sortKey === 'question' ? 'question' : 'time',
+        'COMPLETED',
+      );
       setKnowledgeBases(list);
     } finally {
       setLoading(false);
@@ -60,8 +56,8 @@ export default function KnowledgeBaseInterviewLandingPage() {
     loadKnowledgeBases();
   }, [loadKnowledgeBases]);
 
-  const hasActiveGeneration = knowledgeBases.some(kb =>
-    isQuestionGenerationActive(kb.questionGenStatus)
+  const hasActiveGeneration = knowledgeBases.some((kb) =>
+    isQuestionGenerationActive(kb.questionGenStatus),
   );
 
   useEffect(() => {
@@ -73,7 +69,7 @@ export default function KnowledgeBaseInterviewLandingPage() {
       try {
         const list = await knowledgeBaseApi.getAllKnowledgeBases(
           sortKey === 'question' ? 'question' : 'time',
-          'COMPLETED'
+          'COMPLETED',
         );
         if (!cancelled) setKnowledgeBases(list);
       } finally {
@@ -91,9 +87,10 @@ export default function KnowledgeBaseInterviewLandingPage() {
   const filteredAndSorted = useMemo(() => {
     const trimmed = keyword.trim().toLowerCase();
     const list = trimmed
-      ? knowledgeBases.filter(kb =>
-          kb.name.toLowerCase().includes(trimmed)
-          || (kb.originalFilename || '').toLowerCase().includes(trimmed)
+      ? knowledgeBases.filter(
+          (kb) =>
+            kb.name.toLowerCase().includes(trimmed) ||
+            (kb.originalFilename || '').toLowerCase().includes(trimmed),
         )
       : [...knowledgeBases];
 
@@ -184,9 +181,7 @@ export default function KnowledgeBaseInterviewLandingPage() {
             <BookOpen className="w-7 h-7 text-primary-500" />
             知识库面试
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            选择知识库进入面试，或维护题库
-          </p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">选择知识库进入面试，或维护题库</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -211,7 +206,7 @@ export default function KnowledgeBaseInterviewLandingPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             value={keyword}
-            onChange={event => setKeyword(event.target.value)}
+            onChange={(event) => setKeyword(event.target.value)}
             className={`${INPUT_CLASS} pl-9`}
             placeholder="按名称或文件名搜索"
           />
@@ -220,11 +215,13 @@ export default function KnowledgeBaseInterviewLandingPage() {
           <ArrowDownUp className="w-4 h-4 text-slate-400 shrink-0" />
           <select
             value={sortKey}
-            onChange={event => setSortKey(event.target.value as SortKey)}
+            onChange={(event) => setSortKey(event.target.value as SortKey)}
             className={`${INPUT_CLASS} sm:w-40`}
           >
-            {SORT_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         </div>
@@ -243,7 +240,7 @@ export default function KnowledgeBaseInterviewLandingPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredAndSorted.map(kb => (
+          {filteredAndSorted.map((kb) => (
             <KnowledgeBaseCard
               key={kb.id}
               kb={kb}

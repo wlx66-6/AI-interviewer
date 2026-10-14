@@ -1,9 +1,5 @@
-export type InterviewEntry =
-  | {type: 'create'}
-  | {type: 'resume'; sessionId: string};
+export type InterviewEntry = { type: 'create' } | { type: 'resume'; sessionId: string };
 
 export function resolveInterviewEntry(sessionIdToResume?: string): InterviewEntry {
-  return sessionIdToResume
-    ? {type: 'resume', sessionId: sessionIdToResume}
-    : {type: 'create'};
+  return sessionIdToResume ? { type: 'resume', sessionId: sessionIdToResume } : { type: 'create' };
 }

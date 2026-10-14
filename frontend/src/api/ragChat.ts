@@ -112,7 +112,7 @@ export const ragChatApi = {
     question: string,
     onMessage: (chunk: string) => void,
     onComplete: () => void,
-    onError: (error: Error) => void
+    onError: (error: Error) => void,
   ): Promise<void> {
     return streamSse({
       url: `/api/rag-chat/sessions/${sessionId}/messages/stream`,

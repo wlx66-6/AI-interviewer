@@ -21,12 +21,15 @@ export default function AudioPlayer({ audioData, text, onPlayEnd }: AudioPlayerP
     if (audioData && audioRef.current) {
       audioRef.current.src = `data:audio/mp3;base64,${audioData}`;
       // Auto-play when new audio data arrives
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch((error) => {
-        console.error('Auto-play failed:', error);
-        // Auto-play may fail if user hasn't interacted with the page yet
-      });
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((error) => {
+          console.error('Auto-play failed:', error);
+          // Auto-play may fail if user hasn't interacted with the page yet
+        });
     }
   }, [audioData]);
 
@@ -92,21 +95,13 @@ export default function AudioPlayer({ audioData, text, onPlayEnd }: AudioPlayerP
           className="w-12 h-12 rounded-full bg-primary-500 hover:bg-primary-600
                      flex items-center justify-center text-white transition-colors"
         >
-          {isPlaying ? (
-            <Pause className="w-6 h-6" />
-          ) : (
-            <Play className="w-6 h-6" />
-          )}
+          {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
         </button>
 
         {/* Volume controls */}
         <div className="flex items-center gap-2">
           <button onClick={toggleMute} className="text-slate-400 hover:text-slate-600">
-            {isMuted ? (
-              <VolumeX className="w-5 h-5" />
-            ) : (
-              <Volume2 className="w-5 h-5" />
-            )}
+            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </button>
           <input
             type="range"

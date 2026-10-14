@@ -13,10 +13,7 @@ export default defineConfig({
     video: 'retain-on-failure',
     permissions: ['microphone'],
     launchOptions: {
-      args: [
-        '--use-fake-ui-for-media-stream',
-        '--use-fake-device-for-media-stream',
-      ],
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
     },
   },
   projects: [

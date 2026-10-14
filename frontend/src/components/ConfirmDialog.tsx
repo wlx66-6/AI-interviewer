@@ -1,4 +1,4 @@
-import {AnimatePresence, motion} from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -25,14 +25,16 @@ export default function ConfirmDialog({
   onCancel,
   loading = false,
   customContent,
-  hideButtons = false
+  hideButtons = false,
 }: ConfirmDialogProps) {
   if (!open) return null;
 
   const variantStyles = {
     danger: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
-    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700',
-    warning: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+    primary:
+      'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700',
+    warning:
+      'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600',
   };
 
   return (
@@ -58,17 +60,13 @@ export default function ConfirmDialog({
               className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
             >
               {/* 标题 */}
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-                {title}
-              </h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{title}</h3>
 
               {/* 内容 */}
-                <div className="text-slate-600 dark:text-slate-300 mb-6">
-                {typeof message === 'string' ? (
-                  message && <p className="whitespace-pre-line">{message}</p>
-                ) : (
-                  message
-                )}
+              <div className="text-slate-600 dark:text-slate-300 mb-6">
+                {typeof message === 'string'
+                  ? message && <p className="whitespace-pre-line">{message}</p>
+                  : message}
                 {customContent}
               </div>
 
@@ -96,7 +94,7 @@ export default function ConfirmDialog({
                         <motion.span
                           className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                           animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         />
                         处理中...
                       </span>
@@ -113,4 +111,3 @@ export default function ConfirmDialog({
     </AnimatePresence>
   );
 }
-

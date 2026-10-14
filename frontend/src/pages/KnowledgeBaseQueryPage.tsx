@@ -1,14 +1,14 @@
-import {useEffect, useMemo, useRef, useState, useTransition} from 'react';
-import {AnimatePresence, motion} from 'framer-motion';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {Virtuoso, type VirtuosoHandle} from 'react-virtuoso';
-import {knowledgeBaseApi, type KnowledgeBaseItem, type SortOption} from '../api/knowledgebase';
-import {ragChatApi, type RagChatSessionListItem} from '../api/ragChat';
-import {formatDateOnly} from '../utils/date';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import { knowledgeBaseApi, type KnowledgeBaseItem, type SortOption } from '../api/knowledgebase';
+import { ragChatApi, type RagChatSessionListItem } from '../api/ragChat';
+import { formatDateOnly } from '../utils/date';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import CodeBlock from '../components/CodeBlock';
-import {ChevronLeft, ChevronRight, Edit, MessageSquare, Pin, Plus, Trash2,} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, MessageSquare, Pin, Plus, Trash2 } from 'lucide-react';
 
 interface KnowledgeBaseQueryPageProps {
   onBack: () => void;
@@ -47,8 +47,14 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [currentSessionTitle, setCurrentSessionTitle] = useState<string>('');
   const [loadingSessions, setLoadingSessions] = useState(false);
-  const [sessionDeleteConfirm, setSessionDeleteConfirm] = useState<{ id: number; title: string } | null>(null);
-  const [editingSessionTitle, setEditingSessionTitle] = useState<{ id: number; title: string } | null>(null);
+  const [sessionDeleteConfirm, setSessionDeleteConfirm] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+  const [editingSessionTitle, setEditingSessionTitle] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
   const [newSessionTitle, setNewSessionTitle] = useState('');
 
   // 消息状态
@@ -105,7 +111,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   const groupedKnowledgeBases = useMemo((): CategoryGroup[] => {
     const groups: Map<string, KnowledgeBaseItem[]> = new Map();
 
-    knowledgeBases.forEach(kb => {
+    knowledgeBases.forEach((kb) => {
       const category = kb.category || '未分类';
       if (!groups.has(category)) {
         groups.set(category, []);
@@ -120,7 +126,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       return a.localeCompare(b);
     });
 
-    sortedCategories.forEach(name => {
+    sortedCategories.forEach((name) => {
       result.push({
         name,
         items: groups.get(name)!,
@@ -132,7 +138,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   }, [knowledgeBases, expandedCategories]);
 
   const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(category)) {
         next.delete(category);
@@ -156,7 +162,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   };
 
   const handleToggleKb = (kbId: number) => {
-    setSelectedKbIds(prev => {
+    setSelectedKbIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(kbId)) {
         newSet.delete(kbId);
@@ -183,13 +189,15 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       const detail = await ragChatApi.getSessionDetail(sessionId);
       setCurrentSessionId(detail.id);
       setCurrentSessionTitle(detail.title);
-      setSelectedKbIds(new Set(detail.knowledgeBases.map(kb => kb.id)));
-      setMessages(detail.messages.map(m => ({
-        id: m.id,
-        type: m.type,
-        content: m.content,
-        timestamp: new Date(m.createdAt),
-      })));
+      setSelectedKbIds(new Set(detail.knowledgeBases.map((kb) => kb.id)));
+      setMessages(
+        detail.messages.map((m) => ({
+          id: m.id,
+          type: m.type,
+          content: m.content,
+          timestamp: new Date(m.createdAt),
+        })),
+      );
     } catch (err) {
       console.error('加载会话失败', err);
     }
@@ -241,17 +249,19 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
 
   const formatMarkdown = (text: string): string => {
     if (!text) return '';
-    return text
-      // 处理转义换行符
-      .replace(/\\n/g, '\n')
-      // 确保标题 # 后有空格
-      .replace(/^(#{1,6})([^\s#\n])/gm, '$1 $2')
-      // 确保有序列表数字后有空格（如 1.xxx -> 1. xxx）
-      .replace(/^(\s*)(\d+)\.([^\s\n])/gm, '$1$2. $3')
-      // 确保无序列表 - 或 * 后有空格
-      .replace(/^(\s*[-*])([^\s\n-])/gm, '$1 $2')
-      // 压缩多余空行
-      .replace(/\n{3,}/g, '\n\n');
+    return (
+      text
+        // 处理转义换行符
+        .replace(/\\n/g, '\n')
+        // 确保标题 # 后有空格
+        .replace(/^(#{1,6})([^\s#\n])/gm, '$1 $2')
+        // 确保有序列表数字后有空格（如 1.xxx -> 1. xxx）
+        .replace(/^(\s*)(\d+)\.([^\s\n])/gm, '$1$2. $3')
+        // 确保无序列表 - 或 * 后有空格
+        .replace(/^(\s*[-*])([^\s\n-])/gm, '$1 $2')
+        // 压缩多余空行
+        .replace(/\n{3,}/g, '\n\n')
+    );
   };
 
   const handleSubmitQuestion = async () => {
@@ -280,18 +290,18 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       content: userQuestion,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     const assistantMessage: Message = {
       type: 'assistant',
       content: '',
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, assistantMessage]);
+    setMessages((prev) => [...prev, assistantMessage]);
 
     let fullContent = '';
     const updateAssistantMessage = (content: string) => {
-      setMessages(prev => {
+      setMessages((prev) => {
         const newMessages = [...prev];
         const lastIndex = newMessages.length - 1;
         if (lastIndex >= 0 && newMessages[lastIndex].type === 'assistant') {
@@ -327,7 +337,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
           console.error('流式查询失败:', error);
           updateAssistantMessage(fullContent || error.message || '回答失败，请重试');
           setLoading(false);
-        }
+        },
       );
     } catch (err) {
       console.error('发起流式查询失败:', err);
@@ -388,8 +398,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       <div className="flex gap-4 h-[calc(100vh-10rem)]">
         {/* 左侧：对话历史 */}
         <div className="w-64 flex-shrink-0">
-          <div
-              className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col border border-slate-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col border border-slate-100 dark:border-slate-700">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-slate-800 dark:text-white">对话历史</h2>
               <motion.button
@@ -410,11 +419,11 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                   <motion.div
                     className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto"
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   />
                 </div>
               ) : sessions.length === 0 ? (
-                  <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
                   暂无对话历史
                 </div>
               ) : (
@@ -423,10 +432,11 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                     <div
                       key={session.id}
                       onClick={() => handleLoadSession(session.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all group ${currentSessionId === session.id
+                      className={`p-3 rounded-lg cursor-pointer transition-all group ${
+                        currentSessionId === session.id
                           ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-500'
                           : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'
-                        } ${session.isPinned ? 'border-l-4 border-l-primary-500' : ''}`}
+                      } ${session.isPinned ? 'border-l-4 border-l-primary-500' : ''}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -434,7 +444,9 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                             {session.isPinned && (
                               <Pin className="w-3.5 h-3.5 text-primary-500 fill-primary-500 flex-shrink-0" />
                             )}
-                            <p className="font-medium text-slate-800 dark:text-white text-sm truncate">{session.title}</p>
+                            <p className="font-medium text-slate-800 dark:text-white text-sm truncate">
+                              {session.title}
+                            </p>
                           </div>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             {session.messageCount} 条消息 · {formatTimeAgo(session.updatedAt)}
@@ -443,13 +455,16 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button
                             onClick={(e) => handleTogglePin(session.id, e)}
-                            className={`p-1 rounded transition-colors ${session.isPinned
-                              ? 'text-primary-500 hover:text-primary-600'
-                              : 'text-slate-400 hover:text-primary-500'
-                              }`}
+                            className={`p-1 rounded transition-colors ${
+                              session.isPinned
+                                ? 'text-primary-500 hover:text-primary-600'
+                                : 'text-slate-400 hover:text-primary-500'
+                            }`}
                             title={session.isPinned ? '取消置顶' : '置顶'}
                           >
-                            <Pin className={`w-4 h-4 ${session.isPinned ? 'fill-primary-500' : ''}`} />
+                            <Pin
+                              className={`w-4 h-4 ${session.isPinned ? 'fill-primary-500' : ''}`}
+                            />
                           </button>
                           <button
                             onClick={(e) => {
@@ -483,23 +498,26 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
 
         {/* 中间：聊天区域 */}
         <div className="flex-1 min-w-0">
-          <div
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex flex-col h-full border border-slate-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex flex-col h-full border border-slate-100 dark:border-slate-700">
             {selectedKbIds.size > 0 ? (
               <>
                 {/* 会话信息 */}
                 <div className="p-4 border-b border-slate-200 dark:border-slate-600">
                   <h2 className="text-base font-semibold text-slate-800 dark:text-white">
-                    {currentSessionTitle || (selectedKbIds.size === 1
-                      ? knowledgeBases.find(kb => kb.id === Array.from(selectedKbIds)[0])?.name || '新对话'
-                      : `${selectedKbIds.size} 个知识库 - 新对话`)}
+                    {currentSessionTitle ||
+                      (selectedKbIds.size === 1
+                        ? knowledgeBases.find((kb) => kb.id === Array.from(selectedKbIds)[0])
+                            ?.name || '新对话'
+                        : `${selectedKbIds.size} 个知识库 - 新对话`)}
                   </h2>
                   <div className="flex flex-wrap gap-1.5 mt-2">
-                    {Array.from(selectedKbIds).map(kbId => {
-                      const kb = knowledgeBases.find(k => k.id === kbId);
+                    {Array.from(selectedKbIds).map((kbId) => {
+                      const kb = knowledgeBases.find((k) => k.id === kbId);
                       return kb ? (
-                          <span key={kbId}
-                                className="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs rounded-full">
+                        <span
+                          key={kbId}
+                          className="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs rounded-full"
+                        >
                           {kb.name}
                         </span>
                       ) : null;
@@ -510,8 +528,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 {/* 消息列表 */}
                 <div className="flex-1 min-h-0 relative dark:bg-slate-800">
                   {messages.length === 0 ? (
-                      <div
-                          className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
                       <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">开始提问吧！</p>
                     </div>
@@ -523,22 +540,25 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       followOutput="smooth"
                       className="h-full w-full"
                       itemContent={(index, msg) => (
-                          <div className="pb-4 px-4 first:pt-4 dark:bg-slate-800">
+                        <div className="pb-4 px-4 first:pt-4 dark:bg-slate-800">
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                           >
                             <div
-                              className={`max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.type === 'user'
-                                ? 'bg-primary-600 text-white'
+                              className={`max-w-[85%] rounded-2xl p-4 shadow-sm ${
+                                msg.type === 'user'
+                                  ? 'bg-primary-600 text-white'
                                   : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 text-slate-800 dark:text-slate-100'
                               }`}
                             >
                               {msg.type === 'user' ? (
-                                <p className="whitespace-pre-wrap leading-relaxed text-sm">{msg.content}</p>
+                                <p className="whitespace-pre-wrap leading-relaxed text-sm">
+                                  {msg.content}
+                                </p>
                               ) : (
-                                  <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
+                                <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
                                   <ReactMarkdown
                                     remarkPlugins={[remarkGfm]}
                                     components={{
@@ -549,8 +569,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
 
                                         if (isInline) {
                                           return (
-                                              <code
-                                                  className="bg-slate-100 dark:bg-slate-600 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 rounded-md text-sm font-normal">
+                                            <code className="bg-slate-100 dark:bg-slate-600 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 rounded-md text-sm font-normal">
                                               {children}
                                             </code>
                                           );
@@ -607,10 +626,20 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 </div>
               </>
             ) : (
-                <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500">
+              <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500">
                 <div className="text-center">
-                  <svg className="w-12 h-12 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    className="w-12 h-12 mx-auto mb-3 opacity-50"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   <p className="text-sm">请先在右侧选择知识库</p>
                 </div>
@@ -629,10 +658,11 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
               transition={{ duration: 0.2 }}
               className="flex-shrink-0 overflow-hidden"
             >
-              <div
-                  className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col w-[280px] border border-slate-100 dark:border-slate-700">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col w-[280px] border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-slate-800 dark:text-white">选择知识库</h2>
+                  <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+                    选择知识库
+                  </h2>
                   <button
                     onClick={() => setRightPanelOpen(false)}
                     className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
@@ -683,14 +713,17 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       <motion.div
                         className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto"
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       />
                     </div>
                   ) : knowledgeBases.length === 0 ? (
-                      <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+                    <div className="text-center py-6 text-slate-500 dark:text-slate-400">
                       <p className="mb-2 text-sm">{searchKeyword ? '未找到' : '暂无知识库'}</p>
                       {!searchKeyword && (
-                        <button onClick={onUpload} className="text-primary-500 hover:text-primary-600 font-medium text-sm">
+                        <button
+                          onClick={onUpload}
+                          className="text-primary-500 hover:text-primary-600 font-medium text-sm"
+                        >
                           立即上传
                         </button>
                       )}
@@ -698,8 +731,10 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                   ) : (
                     <div className="space-y-2">
                       {groupedKnowledgeBases.map((group) => (
-                          <div key={group.name}
-                               className="border border-slate-100 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <div
+                          key={group.name}
+                          className="border border-slate-100 dark:border-slate-700 rounded-lg overflow-hidden"
+                        >
                           <button
                             onClick={() => toggleCategory(group.name)}
                             className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -708,8 +743,9 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                               <ChevronRight
                                 className={`w-3.5 h-3.5 text-slate-400 transition-transform ${group.isExpanded ? 'rotate-90' : ''}`}
                               />
-                              <span
-                                  className="font-medium text-slate-700 dark:text-slate-300 text-sm">{group.name}</span>
+                              <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">
+                                {group.name}
+                              </span>
                             </div>
                             <span className="text-xs text-slate-400">{group.items.length}</span>
                           </button>
@@ -728,10 +764,11 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                                     <div
                                       key={kb.id}
                                       onClick={() => handleToggleKb(kb.id)}
-                                      className={`p-2 rounded-lg cursor-pointer transition-all ${selectedKbIds.has(kb.id)
+                                      className={`p-2 rounded-lg cursor-pointer transition-all ${
+                                        selectedKbIds.has(kb.id)
                                           ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-500'
                                           : 'bg-white dark:bg-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700 border border-transparent'
-                                        }`}
+                                      }`}
                                     >
                                       <div className="flex items-center gap-2">
                                         <input
@@ -741,10 +778,13 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                                           onClick={(e) => e.stopPropagation()}
                                           className="w-3.5 h-3.5 text-primary-500 rounded focus:ring-primary-500"
                                         />
-                                        <span
-                                            className="font-medium text-slate-800 dark:text-white text-xs truncate flex-1">{kb.name}</span>
+                                        <span className="font-medium text-slate-800 dark:text-white text-xs truncate flex-1">
+                                          {kb.name}
+                                        </span>
                                       </div>
-                                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-5">{formatFileSize(kb.fileSize)}</p>
+                                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-5">
+                                        {formatFileSize(kb.fileSize)}
+                                      </p>
                                     </div>
                                   ))}
                                 </div>

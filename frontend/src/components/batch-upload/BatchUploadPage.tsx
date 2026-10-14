@@ -16,7 +16,12 @@ interface BatchUploadPageProps {
 }
 
 export default function BatchUploadPage({
-  entityLabel, policy, adapter, customNamePlaceholder, backLabel, onBack,
+  entityLabel,
+  policy,
+  adapter,
+  customNamePlaceholder,
+  backLabel,
+  onBack,
 }: BatchUploadPageProps) {
   const batchUpload = useBatchUpload(adapter, policy);
   const processLabel = adapter.processLabel;
@@ -28,7 +33,8 @@ export default function BatchUploadPage({
           批量上传{entityLabel}
         </h1>
         <p className="text-slate-500 dark:text-slate-400">
-          单批最多 {MAX_BATCH_FILES} 个文件，同时上传 {MAX_CONCURRENT_UPLOADS} 个，上传后自动异步{processLabel}
+          单批最多 {MAX_BATCH_FILES} 个文件，同时上传 {MAX_CONCURRENT_UPLOADS} 个，上传后自动异步
+          {processLabel}
         </p>
       </div>
 
@@ -59,7 +65,7 @@ export default function BatchUploadPage({
         onNameChange={batchUpload.updateCustomName}
         onRemove={batchUpload.removeItem}
         onRetryUpload={batchUpload.retryUpload}
-        onRetryProcessing={clientId => void batchUpload.retryProcessing(clientId)}
+        onRetryProcessing={(clientId) => void batchUpload.retryProcessing(clientId)}
       />
 
       <div className="mt-8 flex flex-wrap justify-center gap-4">

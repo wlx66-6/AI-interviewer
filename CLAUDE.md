@@ -18,3 +18,17 @@
 - 新增规则前先判断：删掉这条后，Claude 是否更容易犯同类错误。
 - 能被测试、格式化、Hook 或 CI 强制的规则，不要只写成自然语言。
 - 如果同一条规则反复被忽略，优先精简规则文件，而不是继续加粗或加感叹号。
+
+## Agent skills
+
+### Issue tracker
+
+Issues 以本地 markdown 文件形式存放在 `.scratch/<feature>/`。详见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+沿用五个默认 triage 角色，标签名即角色名。详见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单上下文：根目录一个 `CONTEXT.md` + `docs/adr/`。详见 `docs/agents/domain.md`。

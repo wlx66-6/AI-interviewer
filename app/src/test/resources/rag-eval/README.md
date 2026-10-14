@@ -21,7 +21,7 @@ RUN_RAG_EVAL=true APP_AI_RAG_REWRITE_ENABLED=true ./gradlew :app:ragEvaluation -
 
 ## 环境隔离
 
-- 每次运行使用独立的 PostgreSQL 逻辑库 `interview_guide_rag_eval`：启动前 drop & create（含 Flyway 迁移），结束后 drop，不触碰开发库。
+- 每次运行使用独立的 PostgreSQL 逻辑库 `ai_interviewer_rag_eval`：启动前 drop & create（含 Flyway 迁移），结束后 drop，不触碰开发库。
 - 测评知识库为库内两条临时 `knowledge_bases` 记录，随库销毁。
 - Redis 使用独立 database index，Stream 消息与开发环境互不可见。
 
@@ -61,7 +61,7 @@ RUN_RAG_EVAL=true APP_AI_RAG_REWRITE_ENABLED=true ./gradlew :app:ragEvaluation -
 ## 报告
 
 - 原始输出：`app/build/reports/rag-eval/<run-id>.json` 与同名 `.md`（build 目录不入 Git）。
-- 正式基线：人工复核并确认脱敏后，复制到本目录 `baselines/<run-id>.json|.md` 入 Git，与 dataset/fixture/Prompt hash、Git SHA、模型标识绑定。
+- 正式基线：人工复核并确认脱敏后，复制到 `app/src/main/resources/rag-eval/baselines/<run-id>.json|.md` 入 Git，与 dataset/fixture/Prompt hash、Git SHA、模型标识绑定。放在主资源而非测试资源，是因为后端 `/api/rag-eval/baselines` 会把它作为只读数据对外展示。
 - 配置快照读取 Spring 实际绑定的值，包含完整 vectorization、search 和 history 参数，不仅记录环境变量中的 chunkSize。
 - `evaluatorVersion=evidence-rank-v2` 表示已修复多证据首命中排名。此前实现取标注顺序中第一个命中证据的排名，可能低估多证据题 MRR，并误标 `LOW_FIRST_RANK`。历史归档保持原样，其 MRR 不能作为修正后的结果；确认模型费用与环境后重新评测，生成新归档。旧报告仅保留片段前 200 字，不能假定可以从旧 JSON 完整重算。
 

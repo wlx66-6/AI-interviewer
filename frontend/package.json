@@ -1,11 +1,18 @@
 {
-  "name": "ai-interview-frontend",
+  "name": "ai-interviewer-frontend",
   "private": true,
-  "version": "0.0.1",
+  "description": "AI Interviewer 前端 —— AI 模拟面试与简历分析平台",
+  "author": "wlx (https://github.com/wlx66-6)",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:unit": "node --test src/**/*.test.ts",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:voice-url": "node --test src/utils/voiceWebSocketUrl.test.ts",
@@ -15,7 +22,8 @@
     "test:interview-capacity": "node --test src/components/knowledgebaseInterview/interviewCapacity.test.ts",
     "test:interview-entry": "node --test src/pages/interviewEntry.test.ts",
     "test:batch-upload": "node --test src/utils/batchUpload.test.ts",
-    "test:e2e:batch-upload": "playwright test e2e/knowledgebase-upload.spec.ts e2e/resume-upload.spec.ts e2e/upload-proxy.spec.ts"
+    "test:e2e:batch-upload": "playwright test e2e/knowledgebase-upload.spec.ts e2e/resume-upload.spec.ts e2e/upload-proxy.spec.ts",
+    "screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
@@ -36,6 +44,7 @@
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^25.5.2",
@@ -45,9 +54,15 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.23",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.6.2",
+    "typescript-eslint": "^8.71.2",
     "vite": "^5.4.10",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.6.0"

@@ -1,8 +1,8 @@
-import {useMemo, useRef} from 'react';
-import {motion} from 'framer-motion';
-import {Virtuoso, type VirtuosoHandle} from 'react-virtuoso';
-import type {InterviewQuestion, InterviewSession} from '../types/interview';
-import {Send} from 'lucide-react';
+import { useMemo, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
+import type { InterviewQuestion, InterviewSession } from '../types/interview';
+import { Send } from 'lucide-react';
 import InterviewMessageBubble from './InterviewMessageBubble';
 
 interface Message {
@@ -38,7 +38,7 @@ export default function InterviewChatPanel({
   // onCompleteEarly, // 暂时未使用
   isSubmitting,
   // showCompleteConfirm, // 暂时未使用
-  onShowCompleteConfirm
+  onShowCompleteConfirm,
 }: InterviewChatPanelProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -56,17 +56,17 @@ export default function InterviewChatPanel({
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] max-w-4xl mx-auto">
       {/* 进度条 */}
-        <div
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-4 shadow-sm dark:shadow-slate-900/50 border border-slate-100 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-4 shadow-sm dark:shadow-slate-900/50 border border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            题目 {currentQuestion ? currentQuestion.questionIndex + 1 : 0} / {session.totalQuestions}
+            题目 {currentQuestion ? currentQuestion.questionIndex + 1 : 0} /{' '}
+            {session.totalQuestions}
           </span>
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             {Math.round(progress)}%
           </span>
         </div>
-            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
             initial={{ width: 0 }}
@@ -77,8 +77,7 @@ export default function InterviewChatPanel({
       </div>
 
       {/* 聊天区域 */}
-        <div
-            className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 overflow-hidden flex flex-col min-h-0 border border-slate-100 dark:border-slate-700">
+      <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 overflow-hidden flex flex-col min-h-0 border border-slate-100 dark:border-slate-700">
         <Virtuoso
           ref={virtuosoRef}
           data={messages}
@@ -97,7 +96,7 @@ export default function InterviewChatPanel({
         />
 
         {/* 输入区域 */}
-            <div className="border-t border-slate-200 dark:border-slate-600 p-4 bg-slate-50 dark:bg-slate-700/50">
+        <div className="border-t border-slate-200 dark:border-slate-600 p-4 bg-slate-50 dark:bg-slate-700/50">
           <div className="flex gap-3">
             <textarea
               value={answer}
@@ -121,7 +120,7 @@ export default function InterviewChatPanel({
                     <motion.div
                       className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     />
                     提交中
                   </>

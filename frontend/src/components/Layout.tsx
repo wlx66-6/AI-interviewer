@@ -1,10 +1,24 @@
-import {Link, Outlet, useLocation, useNavigate} from 'react-router-dom';
-import {motion} from 'framer-motion';
-import {BookOpen, Calendar, ChevronRight, Database, FileStack, MessageSquare, Moon, Settings, Sparkles, Sun, Users,} from 'lucide-react';
-import {useTheme} from '../hooks/useTheme';
-import {useState} from 'react';
-import UnifiedInterviewModal, {UnifiedInterviewConfig} from './UnifiedInterviewModal';
-import {ROUTES} from '../constants/routes';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  BookOpen,
+  Calendar,
+  ChevronRight,
+  Database,
+  FileStack,
+  FlaskConical,
+  Gauge,
+  MessageSquare,
+  Moon,
+  Settings,
+  Sparkles,
+  Sun,
+  Users,
+} from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
+import { useState } from 'react';
+import UnifiedInterviewModal, { UnifiedInterviewConfig } from './UnifiedInterviewModal';
+import { ROUTES } from '../constants/routes';
 
 interface NavItem {
   id: string;
@@ -23,7 +37,7 @@ interface NavGroup {
 export default function Layout() {
   const location = useLocation();
   const currentPath = location.pathname;
-  const {theme, toggleTheme} = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [interviewModalPreset, setInterviewModalPreset] = useState<{
     defaultMode: 'text' | 'voice';
@@ -86,26 +100,94 @@ export default function Layout() {
       id: 'interview',
       title: '面试准备',
       items: [
-        { id: 'resumes', path: '/history', label: '简历管理', icon: FileStack, description: '管理简历，AI 分析' },
-        { id: 'interview-hub', path: '/interview-hub', label: '模拟面试', icon: Sparkles, description: '文字/语音面试练习' },
-        { id: 'interviews', path: '/interviews', label: '面试记录', icon: Users, description: '查看面试历史' },
-        { id: 'interview-schedule', path: '/interview-schedule', label: '面试日程', icon: Calendar, description: '管理面试安排' },
+        {
+          id: 'resumes',
+          path: '/history',
+          label: '简历管理',
+          icon: FileStack,
+          description: '管理简历，AI 分析',
+        },
+        {
+          id: 'interview-hub',
+          path: '/interview-hub',
+          label: '模拟面试',
+          icon: Sparkles,
+          description: '文字/语音面试练习',
+        },
+        {
+          id: 'interviews',
+          path: '/interviews',
+          label: '面试记录',
+          icon: Users,
+          description: '查看面试历史',
+        },
+        {
+          id: 'interview-schedule',
+          path: '/interview-schedule',
+          label: '面试日程',
+          icon: Calendar,
+          description: '管理面试安排',
+        },
       ],
     },
     {
       id: 'knowledge',
       title: '知识库',
       items: [
-        { id: 'kb-manage', path: '/knowledgebase', label: '知识库管理', icon: Database, description: '管理知识文档' },
-        { id: 'kb-interview', path: '/knowledgebase-interview', label: '知识库面试', icon: BookOpen, description: '题库维护与面试' },
-        { id: 'chat', path: '/knowledgebase/chat', label: '问答助手', icon: MessageSquare, description: '基于知识库问答' },
+        {
+          id: 'kb-manage',
+          path: '/knowledgebase',
+          label: '知识库管理',
+          icon: Database,
+          description: '管理知识文档',
+        },
+        {
+          id: 'kb-interview',
+          path: '/knowledgebase-interview',
+          label: '知识库面试',
+          icon: BookOpen,
+          description: '题库维护与面试',
+        },
+        {
+          id: 'chat',
+          path: '/knowledgebase/chat',
+          label: '问答助手',
+          icon: MessageSquare,
+          description: '基于知识库问答',
+        },
+      ],
+    },
+    {
+      id: 'observability',
+      title: '运营观测',
+      items: [
+        {
+          id: 'token-usage',
+          path: ROUTES.tokenUsage,
+          label: 'Token 统计',
+          icon: Gauge,
+          description: '用量、时延与成本',
+        },
+        {
+          id: 'rag-eval',
+          path: ROUTES.ragEval,
+          label: 'RAG 评测',
+          icon: FlaskConical,
+          description: '检索质量与拒答能力',
+        },
       ],
     },
     {
       id: 'system',
       title: '系统',
       items: [
-        { id: 'settings', path: '/settings', label: '设置', icon: Settings, description: '管理模型和语音服务' },
+        {
+          id: 'settings',
+          path: '/settings',
+          label: '设置',
+          icon: Settings,
+          description: '管理模型和语音服务',
+        },
       ],
     },
   ];
@@ -114,16 +196,20 @@ export default function Layout() {
   const isActive = (path: string) => {
     if (path.startsWith('#')) return false;
     if (path === '/history') {
-      return currentPath === '/history'
-        || currentPath === '/'
-        || currentPath.startsWith('/history/')
-        || currentPath === '/upload';
+      return (
+        currentPath === '/history' ||
+        currentPath === '/' ||
+        currentPath.startsWith('/history/') ||
+        currentPath === '/upload'
+      );
     }
     if (path === '/interview-hub') {
-      return currentPath === '/interview-hub'
-        || currentPath === ROUTES.interview
-        || currentPath.startsWith('/interview/')
-        || currentPath.startsWith('/voice-interview');
+      return (
+        currentPath === '/interview-hub' ||
+        currentPath === ROUTES.interview ||
+        currentPath.startsWith('/interview/') ||
+        currentPath.startsWith('/voice-interview')
+      );
     }
     if (path === '/knowledgebase') {
       return currentPath === '/knowledgebase' || currentPath === '/knowledgebase/upload';
@@ -142,7 +228,9 @@ export default function Layout() {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight block">AI Interview</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight block">
+                AI Interviewer
+              </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">智能面试助手</span>
             </div>
           </Link>
@@ -187,21 +275,26 @@ export default function Layout() {
                         key={item.id}
                         to={item.path}
                         className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                          ${active
-                            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                          ${
+                            active
+                              ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                           }`}
                       >
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors
-                          ${active
-                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-700 dark:group-hover:text-white'
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors
+                          ${
+                            active
+                              ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-700 dark:group-hover:text-white'
                           }`}
                         >
                           <item.icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className={`text-sm block ${active ? 'font-semibold' : 'font-medium'}`}>
+                          <span
+                            className={`text-sm block ${active ? 'font-semibold' : 'font-medium'}`}
+                          >
                             {item.label}
                           </span>
                           {item.description && (
@@ -223,7 +316,9 @@ export default function Layout() {
         {/* 底部信息 */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-700">
           <div className="px-3 py-2 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/30 dark:to-slate-800 rounded-xl">
-            <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">AI 面试助手 v1.0</p>
+            <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">
+              AI Interviewer v1.0
+            </p>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Powered by AI</p>
           </div>
         </div>

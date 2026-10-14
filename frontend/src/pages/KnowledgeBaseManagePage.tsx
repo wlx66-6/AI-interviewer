@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {AnimatePresence, motion} from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Check,
@@ -20,7 +20,13 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import {knowledgeBaseApi, KnowledgeBaseItem, KnowledgeBaseStats, SortOption, VectorStatus,} from '../api/knowledgebase';
+import {
+  knowledgeBaseApi,
+  KnowledgeBaseItem,
+  KnowledgeBaseStats,
+  SortOption,
+  VectorStatus,
+} from '../api/knowledgebase';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 
 interface KnowledgeBaseManagePageProps {
@@ -104,15 +110,20 @@ function StatCard({
           <Icon className="w-6 h-6 text-white" />
         </div>
         <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-            <p className="text-2xl font-bold text-slate-800 dark:text-white">{value.toLocaleString()}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-white">
+            {value.toLocaleString()}
+          </p>
         </div>
       </div>
     </motion.div>
   );
 }
 
-export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeBaseManagePageProps) {
+export default function KnowledgeBaseManagePage({
+  onUpload,
+  onChat,
+}: KnowledgeBaseManagePageProps) {
   const [stats, setStats] = useState<KnowledgeBaseStats | null>(null);
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBaseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,8 +152,8 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
         searchKeyword
           ? knowledgeBaseApi.search(searchKeyword)
           : selectedCategory
-          ? knowledgeBaseApi.getByCategory(selectedCategory)
-          : knowledgeBaseApi.getAllKnowledgeBases(sortBy, selectedVectorStatus || undefined),
+            ? knowledgeBaseApi.getByCategory(selectedCategory)
+            : knowledgeBaseApi.getAllKnowledgeBases(sortBy, selectedVectorStatus || undefined),
         knowledgeBaseApi.getAllCategories(),
       ]);
       setStats(statsData);
@@ -162,8 +173,8 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
         searchKeyword
           ? knowledgeBaseApi.search(searchKeyword)
           : selectedCategory
-          ? knowledgeBaseApi.getByCategory(selectedCategory)
-          : knowledgeBaseApi.getAllKnowledgeBases(sortBy, selectedVectorStatus || undefined),
+            ? knowledgeBaseApi.getByCategory(selectedCategory)
+            : knowledgeBaseApi.getAllKnowledgeBases(sortBy, selectedVectorStatus || undefined),
         knowledgeBaseApi.getAllCategories(),
       ]);
       setStats(statsData);
@@ -183,7 +194,7 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
   // 轮询：当有 PENDING 或 PROCESSING 状态时，每5秒刷新一次
   useEffect(() => {
     const hasPendingItems = knowledgeBases.some(
-      kb => kb.vectorStatus === 'PENDING' || kb.vectorStatus === 'PROCESSING'
+      (kb) => kb.vectorStatus === 'PENDING' || kb.vectorStatus === 'PROCESSING',
     );
 
     if (hasPendingItems && !loading) {
@@ -224,20 +235,20 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
   };
 
   // 下载知识库
-    const handleDownload = async (kb: KnowledgeBaseItem) => {
-        try {
-            const blob = await knowledgeBaseApi.downloadKnowledgeBase(kb.id);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = kb.originalFilename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('下载失败:', error);
-        }
+  const handleDownload = async (kb: KnowledgeBaseItem) => {
+    try {
+      const blob = await knowledgeBaseApi.downloadKnowledgeBase(kb.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = kb.originalFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('下载失败:', error);
+    }
   };
 
   // 开始编辑分类
@@ -292,11 +303,13 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
       {/* 页面标题 */}
       <div className="flex items-center justify-between mb-8">
         <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
             <Database className="w-7 h-7 text-primary-500" />
             知识库管理
           </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">管理您的知识库文件，查看使用统计</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            管理您的知识库文件，查看使用统计
+          </p>
         </div>
         <div className="flex gap-3">
           <button
@@ -340,8 +353,7 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
       )}
 
       {/* 搜索和筛选栏 */}
-        <div
-            className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
         <div className="flex flex-wrap items-center gap-4">
           {/* 搜索框 */}
           <form onSubmit={handleSearch} className="flex-1 min-w-[200px]">
@@ -425,8 +437,7 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
       </div>
 
       {/* 知识库列表 */}
-        <div
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
@@ -434,37 +445,34 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
         ) : knowledgeBases.length === 0 ? (
           <div className="text-center py-20">
             <HardDrive className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 dark:text-slate-400">暂无知识库</p>
-            <button
-              onClick={onUpload}
-              className="mt-4 text-primary-500 hover:text-primary-600"
-            >
+            <p className="text-slate-500 dark:text-slate-400">暂无知识库</p>
+            <button onClick={onUpload} className="mt-4 text-primary-500 hover:text-primary-600">
               上传第一个知识库
             </button>
           </div>
         ) : (
           <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
+            <thead className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
               <tr>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   名称
                 </th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   分类
                 </th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   大小
                 </th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   状态
                 </th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   提问
                 </th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   上传时间
                 </th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <th className="text-right px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">
                   操作
                 </th>
               </tr>
@@ -482,8 +490,10 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-slate-400" />
                       <div>
-                          <p className="font-medium text-slate-800 dark:text-white">{kb.name}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{kb.originalFilename}</p>
+                        <p className="font-medium text-slate-800 dark:text-white">{kb.name}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          {kb.originalFilename}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -543,12 +553,13 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
                           className="flex items-center gap-2 group/category"
                         >
                           {kb.category ? (
-                              <span
-                                  className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-sm">
+                            <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-sm">
                               {kb.category}
                             </span>
                           ) : (
-                              <span className="text-slate-400 dark:text-slate-500 text-sm">未分类</span>
+                            <span className="text-slate-400 dark:text-slate-500 text-sm">
+                              未分类
+                            </span>
                           )}
                           <button
                             onClick={() => handleStartEditCategory(kb)}
@@ -561,21 +572,21 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
                       )}
                     </AnimatePresence>
                   </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                     {formatFileSize(kb.fileSize)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <StatusIcon status={kb.vectorStatus} />
-                        <span className="text-sm text-slate-600 dark:text-slate-300">
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
                         {getStatusText(kb.vectorStatus)}
                       </span>
                     </div>
                   </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                     {kb.questionCount}
                   </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                     {formatDate(kb.uploadedAt)}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -596,7 +607,9 @@ export default function KnowledgeBaseManagePage({ onUpload, onChat }: KnowledgeB
                           className="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors disabled:opacity-50"
                           title="重新向量化"
                         >
-                          <RefreshCw className={`w-4 h-4 ${revectorizing === kb.id ? 'animate-spin' : ''}`} />
+                          <RefreshCw
+                            className={`w-4 h-4 ${revectorizing === kb.id ? 'animate-spin' : ''}`}
+                          />
                         </button>
                       )}
                       {/* 删除按钮 */}

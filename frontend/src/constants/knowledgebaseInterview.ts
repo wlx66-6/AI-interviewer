@@ -30,17 +30,17 @@ export const GENERATE_COUNT_OPTIONS = [3, 5, 10, 15];
 export const CATEGORY_LIMIT_OPTIONS = [1, 2, 3, 5];
 
 export const INPUT_CLASS =
-  'w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 '
-  + 'bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white '
-  + 'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500';
+  'w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 ' +
+  'bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white ' +
+  'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500';
 
 export const DEFAULT_DIFFICULTY = 'mid';
 export const DEFAULT_CATEGORY_LIMIT = 3;
 
 export function getStatusLabel(status: KnowledgeBaseQuestionStatus): string {
-  return STATUS_OPTIONS.find(item => item.value === status)?.label || status;
+  return STATUS_OPTIONS.find((item) => item.value === status)?.label || status;
 }
 
 export function getDifficultyLabel(difficulty: string): string {
-  return DIFFICULTY_OPTIONS.find(item => item.value === difficulty)?.label || difficulty;
+  return DIFFICULTY_OPTIONS.find((item) => item.value === difficulty)?.label || difficulty;
 }

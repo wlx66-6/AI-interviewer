@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# npm 锁文件（本项目使用 pnpm）
+package-lock.json

@@ -1,6 +1,11 @@
 export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-export type BatchUploadStatus = Exclude<ProcessingStatus, 'FAILED'>
-  | 'READY' | 'QUEUED' | 'UPLOADING' | 'UPLOAD_FAILED' | 'PROCESS_FAILED';
+export type BatchUploadStatus =
+  | Exclude<ProcessingStatus, 'FAILED'>
+  | 'READY'
+  | 'QUEUED'
+  | 'UPLOADING'
+  | 'UPLOAD_FAILED'
+  | 'PROCESS_FAILED';
 
 export interface BatchUploadItem {
   clientId: string;
@@ -33,8 +38,10 @@ export interface ProcessingResult {
   error?: string | null;
 }
 
-export type BatchUploadResult = Pick<BatchUploadItem,
-  'status' | 'duplicate' | 'error' | 'needsStatusRefresh'> & { entityId: number };
+export type BatchUploadResult = Pick<
+  BatchUploadItem,
+  'status' | 'duplicate' | 'error' | 'needsStatusRefresh'
+> & { entityId: number };
 
 /** 业务适配器保持稳定引用，上传编排无需了解简历或知识库响应结构。 */
 export interface BatchUploadAdapter {
