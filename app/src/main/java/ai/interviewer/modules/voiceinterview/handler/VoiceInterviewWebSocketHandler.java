@@ -1,5 +1,6 @@
 package ai.interviewer.modules.voiceinterview.handler;
 
+import ai.interviewer.modules.voiceinterview.audio.WavEncoder;
 import ai.interviewer.modules.voiceinterview.config.VoiceInterviewProperties;
 import ai.interviewer.modules.voiceinterview.context.VoiceContextCompressor;
 import ai.interviewer.modules.voiceinterview.dto.WebSocketControlMessage;
@@ -280,7 +281,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
         if (pcm == null || pcm.length == 0) {
             return new byte[0];
         }
-        return convertPcmToWav(pcm);
+        return WavEncoder.pcmToWav(pcm);
     }
 
     private String buildOpeningQuestion(VoiceInterviewSessionEntity sessionEntity) {
@@ -729,7 +730,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
                         try {
                             byte[] fallbackPcm = ttsService.synthesize(aiReply);
                             if (fallbackPcm != null && fallbackPcm.length > 0) {
-                                sendAudio(session, convertPcmToWav(fallbackPcm), aiReply);
+                                sendAudio(session, WavEncoder.pcmToWav(fallbackPcm), aiReply);
                             }
                         } catch (Exception e) {
                             log.warn("[Session: {}] Fallback TTS failed: {}", sessionId, e.getMessage());
@@ -769,7 +770,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
                         try {
                             byte[] fallbackPcm = ttsService.synthesize(aiReply);
                             if (fallbackPcm != null && fallbackPcm.length > 0) {
-                                byte[] wavAudio = convertPcmToWav(fallbackPcm);
+                                byte[] wavAudio = WavEncoder.pcmToWav(fallbackPcm);
                                 log.info("[Session: {}] Fallback TTS succeeded, WAV size: {} bytes",
                                     sessionId, wavAudio.length);
                                 sendAudio(session, wavAudio, aiReply);
@@ -788,7 +789,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
                                 System.arraycopy(chunk, 0, mergedPcm, offset, chunk.length);
                                 offset += chunk.length;
                             }
-                            byte[] wavAudio = convertPcmToWav(mergedPcm);
+                            byte[] wavAudio = WavEncoder.pcmToWav(mergedPcm);
                             log.info("[Session: {}] Sending merged audio - {} sentences, WAV size: {} bytes",
                                 sessionId, pcmChunks.size(), wavAudio.length);
                             sendAudio(session, wavAudio, aiReply);
@@ -827,7 +828,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
                     log.error("[Session: {}] TTS returned empty audio", sessionId);
                     incrementCounter("app.voice.interview.tts.empty_audio", "status", "empty");
                 } else {
-                    byte[] wavAudio = convertPcmToWav(aiAudio);
+                    byte[] wavAudio = WavEncoder.pcmToWav(aiAudio);
                     sendAudio(session, wavAudio, aiReply);
                 }
             }
@@ -1064,7 +1065,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
                     try {
                         byte[] pcm = future.get(ttsTimeoutSec, TimeUnit.SECONDS);
                         if (pcm != null && pcm.length > 0 && session.isOpen()) {
-                            sendAudioChunk(session, convertPcmToWav(pcm), index, false);
+                            sendAudioChunk(session, WavEncoder.pcmToWav(pcm), index, false);
                             emittedChunks.incrementAndGet();
                         }
                     } catch (Exception e) {
@@ -1267,71 +1268,6 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
         } catch (Exception e) {
             log.error("Error saving message for session {}", sessionId, e);
         }
-    }
-
-    /**
-     * Convert PCM audio to WAV format
-     * Adds 44-byte WAV header to PCM data for browser playback
-     *
-     * @param pcmData Raw PCM audio data (24kHz, 16-bit, mono)
-     * @return WAV formatted audio data
-     */
-    private byte[] convertPcmToWav(byte[] pcmData) {
-        // Use 24000Hz for Qwen TTS Realtime API
-        int sampleRate = 24000;
-        int bitsPerSample = 16;
-        int numChannels = 1;
-        int byteRate = sampleRate * numChannels * bitsPerSample / 8;
-        int blockAlign = numChannels * bitsPerSample / 8;
-        int dataSize = pcmData.length;
-        int fileSize = dataSize + 36;
-
-        byte[] wavData = new byte[dataSize + 44];
-
-        // Write WAV header directly to avoid stream allocation overhead
-        int pos = 0;
-
-        // RIFF header
-        wavData[pos++] = 'R'; wavData[pos++] = 'I'; wavData[pos++] = 'F'; wavData[pos++] = 'F';
-        writeIntLE(wavData, pos, fileSize); pos += 4;
-        wavData[pos++] = 'W'; wavData[pos++] = 'A'; wavData[pos++] = 'V'; wavData[pos++] = 'E';
-
-        // fmt chunk
-        wavData[pos++] = 'f'; wavData[pos++] = 'm'; wavData[pos++] = 't'; wavData[pos++] = ' ';
-        writeIntLE(wavData, pos, 16); pos += 4; // Chunk size
-        writeShortLE(wavData, pos, (short) 1); pos += 2; // Audio format (1 = PCM)
-        writeShortLE(wavData, pos, (short) numChannels); pos += 2;
-        writeIntLE(wavData, pos, sampleRate); pos += 4;
-        writeIntLE(wavData, pos, byteRate); pos += 4;
-        writeShortLE(wavData, pos, (short) blockAlign); pos += 2;
-        writeShortLE(wavData, pos, (short) bitsPerSample); pos += 2;
-
-        // data chunk
-        wavData[pos++] = 'd'; wavData[pos++] = 'a'; wavData[pos++] = 't'; wavData[pos++] = 'a';
-        writeIntLE(wavData, pos, dataSize); pos += 4;
-
-        // Copy PCM data
-        System.arraycopy(pcmData, 0, wavData, 44, pcmData.length);
-
-        return wavData;
-    }
-
-    /**
-     * Write 32-bit integer in little-endian format
-     */
-    private static void writeIntLE(byte[] buf, int pos, int value) {
-        buf[pos] = (byte) (value & 0xFF);
-        buf[pos + 1] = (byte) ((value >> 8) & 0xFF);
-        buf[pos + 2] = (byte) ((value >> 16) & 0xFF);
-        buf[pos + 3] = (byte) ((value >> 24) & 0xFF);
-    }
-
-    /**
-     * Write 16-bit short in little-endian format
-     */
-    private static void writeShortLE(byte[] buf, int pos, short value) {
-        buf[pos] = (byte) (value & 0xFF);
-        buf[pos + 1] = (byte) ((value >> 8) & 0xFF);
     }
 
     /**
