@@ -4,7 +4,6 @@ import ai.interviewer.modules.voiceinterview.audio.WavEncoder;
 import ai.interviewer.modules.voiceinterview.config.VoiceInterviewProperties;
 import ai.interviewer.modules.voiceinterview.context.VoiceContextCompressor;
 import ai.interviewer.modules.voiceinterview.dto.WebSocketControlMessage;
-import ai.interviewer.modules.voiceinterview.dto.WebSocketSubtitleMessage;
 import ai.interviewer.modules.voiceinterview.model.VoiceInterviewSessionEntity;
 import ai.interviewer.modules.voiceinterview.service.DashscopeLlmService;
 import ai.interviewer.modules.voiceinterview.service.QwenAsrService;
@@ -70,6 +69,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
     private final ai.interviewer.modules.voiceinterview.context.VoiceHistoryLoader voiceHistoryLoader;
     private final VoiceInterviewProperties voiceInterviewProperties;
     private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+    private final VoiceMessageSender messageSender;
 
     /**
      * 合并多段 STT 定稿后再触发 LLM 的延迟调度（与 {@link VoiceInterviewProperties#getUserUtteranceDebounceMs()} 配合）
@@ -173,49 +173,12 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
             startDashScopeStt(sessionId, safeSession);
 
             // 发送欢迎消息
-            sendMessage(safeSession, createWelcomeMessage());
+            messageSender.sendControl(safeSession, "welcome", "连接成功，准备开始语音面试");
             // 自动开场：面试官先说开场语并直接提出第一个问题（仅首次连接、无历史消息时触发）
             triggerOpeningQuestionIfNeeded(sessionId, safeSession);
         } catch (Exception e) {
             log.error("Error establishing WebSocket connection for session {}", sessionId, e);
             sendError(safeSession, "初始化语音识别失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Create welcome message
-     */
-    private String createWelcomeMessage() {
-        return toJson(Map.of(
-            "type", "control",
-            "action", "welcome",
-            "message", "连接成功，准备开始语音面试",
-            "timestamp", System.currentTimeMillis()
-        ));
-    }
-
-    private String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            log.error("Error serializing JSON", e);
-            return "{}";
-        }
-    }
-
-    /**
-     * Send message to WebSocket session
-     */
-    private void sendMessage(WebSocketSession session, String message) {
-        try {
-            if (session.isOpen()) {
-                session.sendMessage(new TextMessage(message));
-                log.debug("Message sent to session: length={}", message.length());
-            } else {
-                log.warn("Session is closed, cannot send message");
-            }
-        } catch (Exception e) {
-            log.error("Error sending message to session", e);
         }
     }
 
@@ -904,84 +867,39 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
     }
 
     private void sendSubtitle(WebSocketSession session, String text, boolean isFinal) {
-        WebSocketSubtitleMessage subtitle = WebSocketSubtitleMessage.builder()
-                .type("subtitle")
-                .text(text)
-                .isFinal(isFinal)
-                .build();
-        sendMessage(session, toJson(subtitle));
+        messageSender.sendSubtitle(session, text, isFinal);
     }
 
     private void sendAudio(WebSocketSession session, byte[] audio, String text) {
-        if (!session.isOpen()) {
-            return;
-        }
-        String base64Audio = Base64.getEncoder().encodeToString(audio);
-        log.info("Sending audio to frontend - WAV size: {} bytes, Base64 length: {}",
-                audio.length, base64Audio.length());
-        sendMessage(session, toJson(Map.of(
-                "type", "audio",
-                "data", base64Audio,
-                "text", text
-        )));
+        messageSender.sendAudio(session, audio, text);
     }
 
     private void sendTextMessage(WebSocketSession session, String text) {
-        sendTextMessage(session, text, false);
+        messageSender.sendText(session, text);
     }
 
     private void sendTextMessage(WebSocketSession session, String text, boolean isFinal) {
-        sendMessage(session, toJson(Map.of(
-                "type", "text",
-                "content", text,
-                "final", isFinal
-        )));
+        messageSender.sendText(session, text, isFinal);
     }
 
     private void sendError(WebSocketSession session, String error) {
-        sendMessage(session, toJson(Map.of("type", "error", "message", error)));
+        messageSender.sendError(session, error);
     }
 
     private void sendAsrReady(WebSocketSession session) {
-        sendAsrStatus(session, "asr_ready", "语音识别已就绪");
+        messageSender.sendAsrReady(session);
     }
 
     private void sendAsrStatus(WebSocketSession session, String action, String message) {
-        if (session == null || !session.isOpen()) {
-            return;
-        }
-        sendMessage(session, toJson(Map.of(
-            "type", "control",
-            "action", action,
-            "message", message,
-            "timestamp", System.currentTimeMillis()
-        )));
+        messageSender.sendAsrStatus(session, action, message);
     }
 
     private void sendAudioChunk(WebSocketSession session, byte[] wavAudio, int index, boolean isLast) {
-        if (!session.isOpen()) {
-            return;
-        }
-        String base64Audio = Base64.getEncoder().encodeToString(wavAudio);
-        sendMessage(session, toJson(Map.of(
-                "type", "audio_chunk",
-                "data", base64Audio,
-                "index", index,
-                "isLast", isLast
-        )));
-        log.debug("[Session] Sent audio chunk index={}, isLast={}, size={} bytes", index, isLast, wavAudio.length);
+        messageSender.sendAudioChunk(session, wavAudio, index, isLast);
     }
 
     private void sendAudioComplete(WebSocketSession session) {
-        if (session == null || !session.isOpen()) {
-            return;
-        }
-        sendMessage(session, toJson(Map.of(
-            "type", "control",
-            "action", "audio_complete",
-            "message", "面试官语音播放完成",
-            "timestamp", System.currentTimeMillis()
-        )));
+        messageSender.sendAudioComplete(session);
     }
 
     private class OrderedTtsChunkEmitter {
@@ -1173,12 +1091,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
     private void sendPauseWarning(String sessionId) {
         WebSocketSession session = sessions.get(sessionId);
         if (session != null && session.isOpen()) {
-            sendMessage(session, toJson(Map.of(
-                "type", "control",
-                "action", "pause_timeout_warning",
-                "message", "会话将在30秒后暂停，请继续说话或点击继续",
-                "timestamp", System.currentTimeMillis()
-            )));
+            messageSender.sendControl(session, "pause_timeout_warning", "会话将在30秒后暂停，请继续说话或点击继续");
         }
     }
 
@@ -1191,12 +1104,7 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
 
         try {
             if (session != null && session.isOpen()) {
-                sendMessage(session, toJson(Map.of(
-                    "type", "control",
-                    "action", "pause_timeout",
-                    "message", "会话因超时已暂停,可在历史记录中恢复",
-                    "timestamp", System.currentTimeMillis()
-                )));
+                messageSender.sendControl(session, "pause_timeout", "会话因超时已暂停,可在历史记录中恢复");
             }
 
             // 2. Save session state to database

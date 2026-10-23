@@ -157,7 +157,8 @@ class VoiceInterviewWebSocketHandlerTest {
         voiceContextCompressor,
         voiceHistoryLoader,
         properties,
-        meterRegistryProvider
+        meterRegistryProvider,
+        new VoiceMessageSender(handlerObjectMapper)
     );
   }
 
