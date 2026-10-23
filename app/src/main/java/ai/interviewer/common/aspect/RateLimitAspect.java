@@ -1,6 +1,7 @@
 package ai.interviewer.common.aspect;
 
 import ai.interviewer.common.annotation.RateLimit;
+import ai.interviewer.common.config.RateLimitProperties;
 import ai.interviewer.common.exception.RateLimitExceededException;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,6 +23,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RateLimitAspect {
 
     private final RedissonClient redissonClient;
+    private final RateLimitProperties rateLimitProperties;
 
     private static final String LUA_SCRIPT;
     private String luaScriptSha;
@@ -169,13 +172,22 @@ public class RateLimitAspect {
     }
 
     private String generateKey(String className, String methodName, RateLimit.Dimension dimension) {
-        String hashTag = "{" + className + ":" + methodName + "}";
-        String keyPrefix = "ratelimit:" + hashTag;
+        String keyPrefix = "ratelimit:{" + className + ":" + methodName + "}";
+
+        if (dimension == RateLimit.Dimension.GLOBAL) {
+            return keyPrefix + ":global";
+        }
+
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            // 非 Web 线程没有请求上下文，只能归到同一个桶
+            return keyPrefix + ":" + dimension.name().toLowerCase(Locale.ROOT) + ":unknown";
+        }
 
         return switch (dimension) {
             case GLOBAL -> keyPrefix + ":global";
-            case IP -> keyPrefix + ":ip:" + getClientIp();
-            case USER -> keyPrefix + ":user:" + getCurrentUserId();
+            case IP -> keyPrefix + ":ip:" + resolveClientIp(request);
+            case USER -> keyPrefix + ":user:" + resolveIdentity(request);
         };
     }
 
@@ -229,56 +241,55 @@ public class RateLimitAspect {
         }
     }
 
-    private String getClientIp() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            return "unknown";
-        }
-
-        HttpServletRequest request = attributes.getRequest();
-        String ip = request.getHeader("X-Forwarded-For");
-
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-
-        return ip != null ? ip : "unknown";
-    }
-
-    private String getCurrentUserId() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            return "anonymous";
-        }
-
-        HttpServletRequest request = attributes.getRequest();
-
-        Object userId = request.getAttribute("userId");
-        if (userId != null) {
-            return userId.toString();
-        }
-
-        userId = request.getHeader("X-User-Id");
-        if (userId != null) {
-            return userId.toString();
-        }
-
-        return "anonymous";
-    }
-
     private record RateLimitContext(RateLimit rule, String key) {
+    }
+
+    private HttpServletRequest currentRequest() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            return attributes.getRequest();
+        }
+        return null;
+    }
+
+    /**
+     * 取客户端地址。转发头只有在 {@code app.rate-limit.trust-forwarded-headers} 打开时才采信。
+     */
+    String resolveClientIp(HttpServletRequest request) {
+        if (rateLimitProperties.isTrustForwardedHeaders()) {
+            String forwarded = firstKnownAddress(request.getHeader("X-Forwarded-For"), request.getHeader("X-Real-IP"));
+            if (forwarded != null) {
+                return forwarded;
+            }
+        }
+
+        String remoteAddr = request.getRemoteAddr();
+        return remoteAddr != null ? remoteAddr : "unknown";
+    }
+
+    /**
+     * 取限流身份：有认证结果用认证结果，否则退回客户端地址。
+     *
+     * <p>不读 X-User-Id 之类的请求头——它是客户端写的，换一个值就是一个全新的限流桶。
+     */
+    String resolveIdentity(HttpServletRequest request) {
+        Object userId = request.getAttribute("userId");
+        if (userId != null && !userId.toString().isBlank()) {
+            return userId.toString();
+        }
+        return "ip:" + resolveClientIp(request);
+    }
+
+    private String firstKnownAddress(String forwardedFor, String realIp) {
+        for (String candidate : new String[] {forwardedFor, realIp}) {
+            if (candidate == null || candidate.isBlank() || "unknown".equalsIgnoreCase(candidate)) {
+                continue;
+            }
+            // 转发链形如 "客户端, 代理1, 代理2"，第一段是原始来源
+            String firstHop = candidate.split(",")[0].trim();
+            if (!firstHop.isEmpty()) {
+                return firstHop;
+            }
+        }
+        return null;
     }
 }

@@ -238,6 +238,10 @@ app:
   knowledge-base-upload:
     max-concurrent: ${APP_KNOWLEDGE_BASE_UPLOAD_MAX_CONCURRENT:4}
 
+  # 限流按客户端地址分桶；只有前面挂了会覆盖 X-Forwarded-For 的代理时才打开这个开关
+  rate-limit:
+    trust-forwarded-headers: ${APP_RATE_LIMIT_TRUST_FORWARDED_HEADERS:false}
+
   # RustFS (S3兼容) 存储配置
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
