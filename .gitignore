@@ -6,6 +6,8 @@ build
 /.claude/*
 !/.claude/rules/
 !/.claude/rules/**
+!/.claude/tdd/
+!/.claude/tdd/**
 /.idea
 /app/bin
 # Environment variables
@@ -17,8 +19,6 @@ qodana.yaml
 openapi.tmp.json
 
 app/src/main/resources/application-dev.yml
-/docs
-SETUP_API_KEYS.md
 
 # AI Assistant documentation
 CLAUDE.local.md

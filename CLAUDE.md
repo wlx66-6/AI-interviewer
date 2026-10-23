@@ -31,4 +31,4 @@ Issues 以本地 markdown 文件形式存放在 `.scratch/<feature>/`。详见 `
 
 ### Domain docs
 
-单上下文：根目录一个 `CONTEXT.md` + `docs/adr/`。详见 `docs/agents/domain.md`。
+单上下文：架构决策记录在 `docs/adr/`；领域词汇表 `CONTEXT.md` 尚未建立。详见 `docs/agents/domain.md`。

@@ -262,7 +262,7 @@ flowchart LR
 
 | 项目 | 规模 | 说明 |
 | --- | --- | --- |
-| 后端单测 / 集成测试 | **539 个用例**（124 个测试类） | JUnit 5 + Mockito + AssertJ；45 个用例需要真实 Redis/PostgreSQL，缺少环境时跳过 |
+| 后端单测 / 集成测试 | **505 个用例**（71 个测试类，`@Nested` 展开后 114 个套件） | JUnit 5 + Mockito + AssertJ；15 个用例需要真实 Redis/PostgreSQL，缺少环境时跳过 |
 | 后端覆盖率（JaCoCo） | 行 **40.3%** / 指令 41.8% / 分支 30.8% | `./gradlew :app:test :app:jacocoTestReport`，报告在 `app/build/reports/jacoco/test/html/` |
 | 前端单测 | **43 个用例**（10 个测试文件） | Node 原生 `node:test`，`pnpm run test:unit` |
 | 前端 E2E | **5 个 Playwright 用例集** | 简历上传、知识库上传、上传代理、语音连接、语音面试 |
@@ -323,9 +323,15 @@ AI-interviewer/
 │   └── vite.config.ts
 │
 ├── docker/postgres/init.sql          # 数据库初始化（pgvector 扩展）
+├── docs/                             # ADR、架构与测试设计文档
+├── screenshots/                      # README 截图（pnpm run screenshots 生成）
+├── scripts/                          # 仓库维护脚本（commit-msg hook 自测）
+├── .githooks/                        # commit message 校验 hook（需 core.hooksPath 指向）
+├── .claude/rules/                    # 按目录划分的编码细则
 ├── docker-compose.yml                # 完整部署：前端 + 后端 + PostgreSQL + Redis + MinIO
 ├── docker-compose.dev.yml            # 本地开发依赖：PostgreSQL + Redis + RustFS
 ├── RAG-EVALUATION.md                 # RAG 检索质量评估报告
+├── AGENTS.md / CLAUDE.md             # Agent 共享规则与工具入口
 ├── .env.example                      # 环境变量示例
 └── README.md
 ```
@@ -349,6 +355,9 @@ AI-interviewer/
 # 仓库上传后替换为实际地址
 git clone <你的仓库地址>
 cd AI-interviewer
+
+# 仓库自带 commit message 校验，但 git 不会自动读取 .githooks，需要指一次
+git config core.hooksPath .githooks
 ```
 
 ### 2. 配置环境变量
