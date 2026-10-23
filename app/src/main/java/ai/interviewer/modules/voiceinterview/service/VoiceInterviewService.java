@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -476,6 +477,10 @@ public class VoiceInterviewService {
             sessions = sessionRepository.findByUserIdOrderByUpdatedAtDesc(userId);
         }
 
+        Map<Long, Long> messageCounts = countDialogueMessagesBySession(
+            sessions.stream().map(VoiceInterviewSessionEntity::getId).toList()
+        );
+
         return sessions.stream()
             .map(session -> SessionMetaDTO.builder()
                 .sessionId(session.getId())
@@ -485,7 +490,7 @@ public class VoiceInterviewService {
                 .createdAt(session.getCreatedAt())
                 .updatedAt(session.getUpdatedAt())
                 .actualDuration(session.getActualDuration())
-                .messageCount(countDialogueMessages(session.getId()))
+                .messageCount(messageCounts.getOrDefault(session.getId(), 0L))
                 .evaluateStatus(session.getEvaluateStatus() != null ? session.getEvaluateStatus().name() : null)
                 .evaluateError(session.getEvaluateError())
                 .build())
@@ -642,6 +647,18 @@ public class VoiceInterviewService {
     private long countDialogueMessages(Long sessionId) {
         return messageRepository.countBySessionIdAndMessageTypeNot(
             sessionId, VoiceInterviewMessageEntity.MESSAGE_TYPE_SUMMARY);
+    }
+
+    private Map<Long, Long> countDialogueMessagesBySession(List<Long> sessionIds) {
+        if (sessionIds.isEmpty()) {
+            return Map.of();
+        }
+        return messageRepository
+            .countBySessionIds(sessionIds, VoiceInterviewMessageEntity.MESSAGE_TYPE_SUMMARY)
+            .stream()
+            .collect(Collectors.toMap(
+                VoiceInterviewMessageRepository.SessionMessageCount::getSessionId,
+                VoiceInterviewMessageRepository.SessionMessageCount::getCount));
     }
 
     /**

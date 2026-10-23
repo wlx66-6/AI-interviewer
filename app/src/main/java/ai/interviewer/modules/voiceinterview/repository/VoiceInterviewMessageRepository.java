@@ -4,8 +4,11 @@ import ai.interviewer.modules.voiceinterview.model.VoiceInterviewMessageEntity;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +52,26 @@ public interface VoiceInterviewMessageRepository extends JpaRepository<VoiceInte
     long countBySessionId(Long sessionId);
 
     long countBySessionIdAndMessageTypeNot(Long sessionId, String messageType);
+
+    /**
+     * 批量统计多个会话的对话消息条数（排除 SUMMARY 行）。
+     *
+     * <p>会话列表页每行都要显示消息数，逐个会话 count 就是一次 N+1；这里一次分组查完。
+     * 没有消息的会话不会出现在结果里，调用方按 0 处理。
+     */
+    @Query("select m.sessionId as sessionId, count(m) as count "
+        + "from VoiceInterviewMessageEntity m "
+        + "where m.sessionId in :sessionIds and m.messageType <> :excludedType "
+        + "group by m.sessionId")
+    List<SessionMessageCount> countBySessionIds(@Param("sessionIds") Collection<Long> sessionIds,
+                                                @Param("excludedType") String excludedType);
+
+    interface SessionMessageCount {
+
+        Long getSessionId();
+
+        Long getCount();
+    }
 
     void deleteBySessionId(Long sessionId);
 
