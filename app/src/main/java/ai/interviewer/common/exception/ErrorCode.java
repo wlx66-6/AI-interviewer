@@ -63,9 +63,6 @@ public enum ErrorCode {
     // ========== 限流模块错误 8xxx ==========
     RATE_LIMIT_EXCEEDED(8001, "请求过于频繁，请稍后再试"),
 
-    // ========== 面试日程模块错误 9xxx ==========
-    INTERVIEW_SCHEDULE_NOT_FOUND(9001, "面试日程不存在"),
-
     // ========== 语音面试模块错误 10xxx ==========
     VOICE_SESSION_NOT_FOUND(10001, "语音面试会话不存在"),
     VOICE_EVALUATION_FAILED(10004, "语音面试评估失败"),

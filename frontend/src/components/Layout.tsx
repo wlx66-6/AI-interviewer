@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
-  Calendar,
   ChevronRight,
   Database,
   FileStack,
@@ -120,13 +119,6 @@ export default function Layout() {
           label: '面试记录',
           icon: Users,
           description: '查看面试历史',
-        },
-        {
-          id: 'interview-schedule',
-          path: '/interview-schedule',
-          label: '面试日程',
-          icon: Calendar,
-          description: '管理面试安排',
         },
       ],
     },
