@@ -5,6 +5,7 @@ import ai.interviewer.common.constant.CommonConstants.InterviewDefaults;
 import ai.interviewer.common.exception.BusinessException;
 import ai.interviewer.common.exception.ErrorCode;
 import ai.interviewer.common.model.AsyncTaskStatus;
+import ai.interviewer.common.transaction.AfterCommit;
 import ai.interviewer.modules.voiceinterview.config.VoiceInterviewProperties;
 import ai.interviewer.modules.voiceinterview.dto.CreateSessionRequest;
 import ai.interviewer.modules.voiceinterview.dto.SessionMetaDTO;
@@ -22,8 +23,6 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -673,18 +672,7 @@ public class VoiceInterviewService {
     }
 
     private void sendEvaluateTaskAfterCommit(Long sessionId) {
-        Runnable sendTask = () -> voiceEvaluateStreamProducer.sendEvaluateTask(sessionId.toString());
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            sendTask.run();
-            return;
-        }
-
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                sendTask.run();
-            }
-        });
+        AfterCommit.run(() -> voiceEvaluateStreamProducer.sendEvaluateTask(sessionId.toString()));
     }
 
     /**
@@ -698,6 +686,7 @@ public class VoiceInterviewService {
         evaluationRepository.findBySessionId(sessionId).ifPresent(evaluationRepository::delete);
         messageRepository.deleteBySessionId(sessionId);
         sessionRepository.deleteById(sessionId);
+        invalidateSessionCache(sessionId);
         log.info("Deleted voice interview session: {}", sessionId);
     }
 
@@ -705,10 +694,17 @@ public class VoiceInterviewService {
      * Cache session in Redis
      */
     private void cacheSession(VoiceInterviewSessionEntity session) {
-        String cacheKey = getSessionCacheKey(session.getId());
-        RBucket<VoiceInterviewSessionEntity> bucket = redissonClient.getBucket(cacheKey);
-        bucket.set(session, Duration.ofHours(CACHE_TTL_HOURS));
-        log.debug("Cached session: {}", session.getId());
+        AfterCommit.run(() -> {
+            try {
+                String cacheKey = getSessionCacheKey(session.getId());
+                RBucket<VoiceInterviewSessionEntity> bucket = redissonClient.getBucket(cacheKey);
+                bucket.set(session, Duration.ofHours(CACHE_TTL_HOURS));
+                log.debug("Cached session: {}", session.getId());
+            } catch (Exception e) {
+                // 缓存只是加速路径，写不进去不该让已经提交的会话失败
+                log.warn("写入会话缓存失败: sessionId={}", session.getId(), e);
+            }
+        });
     }
 
     /**
