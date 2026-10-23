@@ -10,6 +10,11 @@
 
 已修：`4c0b844`。顺手把 `spotlessCheck`、前端 `lint`、`format:check` 加进了 job。
 
+修完之后第一次真的触发，挂在 `./gradlew: Permission denied`（exit 126）：`gradlew`、`.githooks/commit-msg`、
+`scripts/test-commit-msg-hook.sh` 在 git 索引里都是 100644。Windows 上的 git 不记录可执行位，本地怎么跑都不会有事，
+只有 Linux runner 会撞上。`7b25e67` 用 `git update-index --chmod=+x` 改索引，文件内容没动。
+这条比表单本身更有意思：门禁坏着的时候什么都发现不了，门禁修好了才会立刻报错。
+
 ## 2. commit message 校验钩子没生效
 
 仓库里有一个 `.githooks/commit-msg`，规定标题必须是 `feat|fix|refactor|...` 加中文描述，
