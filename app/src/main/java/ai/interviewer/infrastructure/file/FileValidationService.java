@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +70,9 @@ public class FileValidationService {
             return;
         }
 
-        // 如果MIME类型不支持，再检查文件扩展名
-        if (fileName != null && extensionChecker.test(fileName)) {
+        // MIME 是按内容识别出来的，只有它给不出信息时才允许用扩展名兜底。
+        // 否则把 HTML 改名为 .md 就能混过这里。
+        if (isUnknownMimeType(contentType) && fileName != null && extensionChecker.test(fileName)) {
             return;
         }
 
@@ -86,12 +88,45 @@ public class FileValidationService {
             return false;
         }
 
-        String lowerContentType = contentType.toLowerCase();
+        String baseType = normalize(contentType);
+        if (baseType.isEmpty()) {
+            return false;
+        }
+
         return allowedTypes.stream()
-            .anyMatch(allowed -> {
-                String lowerAllowed = allowed.toLowerCase();
-                return lowerContentType.contains(lowerAllowed) || lowerAllowed.contains(lowerContentType);
-            });
+            .map(this::normalize)
+            .filter(allowed -> !allowed.isEmpty())
+            .anyMatch(allowed -> matches(baseType, allowed));
+    }
+
+    /**
+     * 判断 MIME 是否给不出类型信息：缺失、空串，或 HTTP 里的通用兜底值。
+     */
+    private boolean isUnknownMimeType(String contentType) {
+        String baseType = normalize(contentType);
+        return baseType.isEmpty() || "application/octet-stream".equals(baseType);
+    }
+
+    /**
+     * 去掉 MIME 参数（如 ; charset=utf-8）并统一小写
+     */
+    private String normalize(String contentType) {
+        if (contentType == null) {
+            return "";
+        }
+
+        int parameterStart = contentType.indexOf(';');
+        String baseType = parameterStart >= 0 ? contentType.substring(0, parameterStart) : contentType;
+        return baseType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean matches(String baseType, String allowedType) {
+        if (allowedType.endsWith("/*")) {
+            return baseType.startsWith(allowedType.substring(0, allowedType.length() - 1));
+        }
+
+        // 配置里既有完整 MIME（application/pdf），也允许只写关键字（pdf）
+        return allowedType.contains("/") ? baseType.equals(allowedType) : baseType.contains(allowedType);
     }
 
     /**
