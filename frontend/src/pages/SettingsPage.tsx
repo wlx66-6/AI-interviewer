@@ -9,84 +9,24 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Eye,
-  EyeOff,
   RefreshCw,
   Server,
   Edit2,
   Mic,
   Volume2,
-  ChevronDown,
   Database,
 } from 'lucide-react';
 import { llmProviderApi } from '../api/llmProvider';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ProviderFormModal from '../components/settings/ProviderFormModal';
 import type {
   ProviderItem,
-  CreateProviderRequest,
-  UpdateProviderRequest,
   ProviderTestResult,
   AsrConfig,
   TtsConfig,
   AsrConfigRequest,
   TtsConfigRequest,
 } from '../types/llmProvider';
-
-// Provider 预设：已知 Provider 的 Base URL、推荐模型和向量模型
-const PROVIDER_PRESETS: Record<
-  string,
-  {
-    baseUrl: string;
-    models: { value: string; label: string }[];
-    embeddingModels?: { value: string; label: string }[];
-    embeddingDimensions?: number;
-    supportsEmbedding: boolean;
-  }
-> = {
-  dashscope: {
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    models: [
-      { value: 'qwen3.8-flash', label: 'Qwen3.8 Flash — 默认·性价比首选' },
-      { value: 'qwen3.7-flash', label: 'Qwen3.7 Flash — 上一代 Flash' },
-      { value: 'qwen3.6-flash', label: 'Qwen3.6 Flash — 老一代 Flash' },
-      { value: 'qwen3.6-plus', label: 'Qwen3.6 Plus — 高性能' },
-      { value: 'qwen-max', label: 'Qwen Max — 稳定旗舰' },
-      { value: 'qwen-plus', label: 'Qwen Plus — 均衡' },
-      { value: 'qwen-flash', label: 'Qwen Flash — 经济' },
-    ],
-    embeddingModels: [{ value: 'text-embedding-v3', label: 'text-embedding-v3 — 推荐' }],
-    embeddingDimensions: 1024,
-    supportsEmbedding: true,
-  },
-  // deepseek / kimi / glm 预设的 Base URL 也指向百炼：百炼托管的第三方模型走同一个
-  // OpenAI 兼容端点，一把百炼 Key 就能切换多家模型。想直连原厂时把 Base URL
-  // 改成 api.deepseek.com / api.moonshot.cn / open.bigmodel.cn 并填各自 Key 即可。
-  deepseek: {
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    models: [
-      { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash — 百炼托管·性价比' },
-      { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro — 百炼托管·最强推理' },
-    ],
-    supportsEmbedding: false,
-  },
-  kimi: {
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    models: [
-      { value: 'kimi-k3', label: 'Kimi K3 — 百炼托管·默认·最新' },
-      { value: 'kimi-k2.6', label: 'Kimi K2.6 — 百炼托管·上一代' },
-      { value: 'kimi-k2.5', label: 'Kimi K2.5 — 百炼托管·老一代' },
-    ],
-    supportsEmbedding: false,
-  },
-  glm: {
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    models: [
-      { value: 'glm-5.3', label: 'GLM-5.3 — 百炼托管·最新' },
-      { value: 'glm-5', label: 'GLM-5 — 百炼托管·稳定' },
-    ],
-    supportsEmbedding: false,
-  },
-};
 
 type ConfigRowProps = {
   label: string;
@@ -157,23 +97,6 @@ export default function SettingsPage() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [editingProvider, setEditingProvider] = useState<ProviderItem | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // Form fields
-  const [formId, setFormId] = useState('');
-  const [formBaseUrl, setFormBaseUrl] = useState('');
-  const [formApiKey, setFormApiKey] = useState('');
-  const [formModel, setFormModel] = useState('');
-  const [formEmbeddingModel, setFormEmbeddingModel] = useState('');
-  const [formEmbeddingDimensions, setFormEmbeddingDimensions] = useState('1024');
-  const [formSupportsEmbedding, setFormSupportsEmbedding] = useState(false);
-  const [formTemperature, setFormTemperature] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [showEmbeddingDropdown, setShowEmbeddingDropdown] = useState(false);
-
-  // 当前表单 Provider ID 匹配的预设
-  const currentPreset = useMemo(() => PROVIDER_PRESETS[formId.toLowerCase()], [formId]);
 
   // Test state
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -252,131 +175,17 @@ export default function SettingsPage() {
   // --- Modal helpers ---
   const openCreateModal = () => {
     setEditingProvider(null);
-    setFormId('');
-    setFormBaseUrl('');
-    setFormApiKey('');
-    setFormModel('');
-    setFormEmbeddingModel('');
-    setFormEmbeddingDimensions('1024');
-    setFormSupportsEmbedding(false);
-    setShowApiKey(false);
     setShowModal(true);
   };
 
   const openEditModal = (provider: ProviderItem) => {
     setEditingProvider(provider);
-    setFormId(provider.id);
-    setFormBaseUrl(provider.baseUrl);
-    setFormApiKey('');
-    setFormModel(provider.model);
-    setFormEmbeddingModel(provider.embeddingModel || '');
-    setFormEmbeddingDimensions(
-      provider.embeddingDimensions != null ? String(provider.embeddingDimensions) : '1024',
-    );
-    setFormSupportsEmbedding(provider.supportsEmbedding);
-    setFormTemperature(provider.temperature != null ? String(provider.temperature) : '');
-    setShowApiKey(false);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingProvider(null);
-  };
-
-  // --- CRUD handlers ---
-  const handleCreate = async () => {
-    if (!formId.trim() || !formBaseUrl.trim() || !formApiKey.trim() || !formModel.trim()) {
-      showToast('请填写必填字段', 'error');
-      return;
-    }
-    if (formSupportsEmbedding && !formEmbeddingModel.trim()) {
-      showToast('支持向量化时需要填写向量模型，例如 text-embedding-v3', 'error');
-      return;
-    }
-    const embeddingDimensions = parseInt(formEmbeddingDimensions.trim(), 10);
-    if (
-      formSupportsEmbedding &&
-      (!Number.isFinite(embeddingDimensions) || embeddingDimensions <= 0)
-    ) {
-      showToast('向量维度必须为正整数，当前 pgvector 表为 1024 维', 'error');
-      return;
-    }
-    setSaving(true);
-    try {
-      const data: CreateProviderRequest = {
-        id: formId.trim(),
-        baseUrl: formBaseUrl.trim(),
-        apiKey: formApiKey.trim(),
-        model: formModel.trim(),
-        supportsEmbedding: formSupportsEmbedding,
-      };
-      if (formEmbeddingModel.trim()) {
-        data.embeddingModel = formEmbeddingModel.trim();
-        data.embeddingDimensions = embeddingDimensions;
-      }
-      if (formTemperature.trim()) {
-        const temp = parseFloat(formTemperature.trim());
-        if (!isNaN(temp)) data.temperature = temp;
-      }
-      await llmProviderApi.create(data);
-      showToast('Provider 创建成功');
-      closeModal();
-      await loadData();
-    } catch (err) {
-      console.error('Failed to create provider:', err);
-      showToast(err instanceof Error ? err.message : '创建失败', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!editingProvider) return;
-    if (!formBaseUrl.trim() || !formModel.trim()) {
-      showToast('请填写必填字段', 'error');
-      return;
-    }
-    if (formSupportsEmbedding && !formEmbeddingModel.trim()) {
-      showToast('支持向量化时需要填写向量模型，例如 text-embedding-v3', 'error');
-      return;
-    }
-    const embeddingDimensions = parseInt(formEmbeddingDimensions.trim(), 10);
-    if (
-      formSupportsEmbedding &&
-      (!Number.isFinite(embeddingDimensions) || embeddingDimensions <= 0)
-    ) {
-      showToast('向量维度必须为正整数，当前 pgvector 表为 1024 维', 'error');
-      return;
-    }
-    setSaving(true);
-    try {
-      const data: UpdateProviderRequest = {
-        baseUrl: formBaseUrl.trim(),
-        model: formModel.trim(),
-        embeddingModel: formEmbeddingModel.trim(),
-        supportsEmbedding: formSupportsEmbedding,
-      };
-      if (formSupportsEmbedding) {
-        data.embeddingDimensions = embeddingDimensions;
-      }
-      if (formApiKey.trim()) {
-        data.apiKey = formApiKey.trim();
-      }
-      if (formTemperature.trim()) {
-        const temp = parseFloat(formTemperature.trim());
-        if (!isNaN(temp)) data.temperature = temp;
-      }
-      await llmProviderApi.update(editingProvider.id, data);
-      showToast('Provider 更新成功');
-      closeModal();
-      await loadData();
-    } catch (err) {
-      console.error('Failed to update provider:', err);
-      showToast(err instanceof Error ? err.message : '更新失败', 'error');
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleDelete = async () => {
@@ -473,14 +282,6 @@ export default function SettingsPage() {
       showToast(err instanceof Error ? err.message : '设置默认向量 Provider 失败', 'error');
     } finally {
       setSettingEmbeddingDefault(false);
-    }
-  };
-
-  const handleSaveModal = () => {
-    if (editingProvider) {
-      handleUpdate();
-    } else {
-      handleCreate();
     }
   };
 
@@ -954,352 +755,15 @@ export default function SettingsPage() {
       {/* Create / Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6"
-              >
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5">
-                  {editingProvider ? '编辑 Provider' : '新增 Provider'}
-                </h3>
-
-                <div className="space-y-4">
-                  {/* Provider ID */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      Provider ID <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formId}
-                      onChange={(e) => {
-                        const newId = e.target.value;
-                        setFormId(newId);
-                        // 新建时自动填充已知 Provider 的 Base URL
-                        if (!editingProvider) {
-                          const preset = PROVIDER_PRESETS[newId.toLowerCase()];
-                          if (preset) {
-                            setFormBaseUrl(preset.baseUrl);
-                            setFormSupportsEmbedding(preset.supportsEmbedding);
-                            setFormEmbeddingModel(preset.embeddingModels?.[0]?.value ?? '');
-                            setFormEmbeddingDimensions(String(preset.embeddingDimensions ?? 1024));
-                          }
-                        }
-                      }}
-                      disabled={!!editingProvider}
-                      placeholder="例如: dashscope, deepseek, kimi, glm"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                        bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                        placeholder:text-slate-400 focus:outline-none focus:ring-2
-                        focus:ring-primary-500/50 focus:border-primary-400 transition-shadow
-                        disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-
-                  {/* Base URL */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      Base URL <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formBaseUrl}
-                      onChange={(e) => setFormBaseUrl(e.target.value)}
-                      placeholder="例如: https://api.openai.com/v1"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                        bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                        placeholder:text-slate-400 focus:outline-none focus:ring-2
-                        focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
-                    />
-                  </div>
-
-                  {/* API Key */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      API Key{' '}
-                      {editingProvider && (
-                        <span className="text-slate-400 font-normal">(留空则不修改)</span>
-                      )}
-                      {!editingProvider && <span className="text-red-500">*</span>}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showApiKey ? 'text' : 'password'}
-                        value={formApiKey}
-                        onChange={(e) => setFormApiKey(e.target.value)}
-                        placeholder={editingProvider ? '留空则保持原值' : '输入 API Key'}
-                        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-slate-200 dark:border-slate-600
-                          bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                          placeholder:text-slate-400 focus:outline-none focus:ring-2
-                          focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-                          hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                      >
-                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Chat Model */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      聊天模型 <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formModel}
-                        onChange={(e) => {
-                          setFormModel(e.target.value);
-                          setShowModelDropdown(false);
-                        }}
-                        onFocus={() => currentPreset && setShowModelDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowModelDropdown(false), 150)}
-                        placeholder={
-                          currentPreset
-                            ? '从下拉列表选择或输入自定义聊天模型名'
-                            : '例如: qwen3.8-flash, deepseek-v4.1-flash, kimi-k3'
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                          bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                          placeholder:text-slate-400 focus:outline-none focus:ring-2
-                          focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
-                      />
-                      {currentPreset && (
-                        <button
-                          type="button"
-                          onClick={() => setShowModelDropdown(!showModelDropdown)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-                            hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      )}
-                      {showModelDropdown && currentPreset && (
-                        <div
-                          className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700
-                          border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg
-                          max-h-60 overflow-auto"
-                        >
-                          {currentPreset.models.map((m) => (
-                            <button
-                              key={m.value}
-                              type="button"
-                              onClick={() => {
-                                setFormModel(m.value);
-                                setShowModelDropdown(false);
-                              }}
-                              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-primary-50
-                                dark:hover:bg-slate-600 transition-colors flex justify-between items-center
-                                ${
-                                  formModel === m.value
-                                    ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-slate-600'
-                                    : 'text-slate-700 dark:text-slate-200'
-                                }`}
-                            >
-                              <span className="font-mono">{m.value}</span>
-                              <span className="text-xs text-slate-400 dark:text-slate-500 ml-2 whitespace-nowrap">
-                                {m.label}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Embedding Model */}
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        向量模型{' '}
-                        <span className="text-slate-400 font-normal">
-                          (知识库向量化，例如 text-embedding-v3)
-                        </span>
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-                        <input
-                          type="checkbox"
-                          checked={formSupportsEmbedding}
-                          onChange={(e) => {
-                            setFormSupportsEmbedding(e.target.checked);
-                            if (!e.target.checked) {
-                              setFormEmbeddingModel('');
-                              setFormEmbeddingDimensions('1024');
-                            }
-                          }}
-                          className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        支持 Embedding
-                      </label>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formEmbeddingModel}
-                        onChange={(e) => {
-                          setFormEmbeddingModel(e.target.value);
-                          setShowEmbeddingDropdown(false);
-                        }}
-                        onFocus={() =>
-                          formSupportsEmbedding &&
-                          currentPreset?.embeddingModels &&
-                          setShowEmbeddingDropdown(true)
-                        }
-                        onBlur={() => setTimeout(() => setShowEmbeddingDropdown(false), 150)}
-                        disabled={!formSupportsEmbedding}
-                        placeholder={
-                          formSupportsEmbedding
-                            ? currentPreset?.embeddingModels
-                              ? '从下拉列表选择或输入自定义向量模型名'
-                              : '例如: text-embedding-v3'
-                            : 'DeepSeek / Kimi 等 Provider 通常不支持 Embedding'
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                          bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                          placeholder:text-slate-400 focus:outline-none focus:ring-2
-                          focus:ring-primary-500/50 focus:border-primary-400 transition-shadow
-                          disabled:cursor-not-allowed disabled:opacity-60"
-                      />
-                      {formSupportsEmbedding && currentPreset?.embeddingModels && (
-                        <button
-                          type="button"
-                          onClick={() => setShowEmbeddingDropdown(!showEmbeddingDropdown)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-                            hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      )}
-                      {formSupportsEmbedding &&
-                        showEmbeddingDropdown &&
-                        currentPreset?.embeddingModels && (
-                          <div
-                            className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700
-                          border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg
-                          max-h-60 overflow-auto"
-                          >
-                            {currentPreset.embeddingModels.map((m) => (
-                              <button
-                                key={m.value}
-                                type="button"
-                                onClick={() => {
-                                  setFormEmbeddingModel(m.value);
-                                  setShowEmbeddingDropdown(false);
-                                }}
-                                className={`w-full px-4 py-2.5 text-left text-sm hover:bg-primary-50
-                                dark:hover:bg-slate-600 transition-colors flex justify-between items-center
-                                ${
-                                  formEmbeddingModel === m.value
-                                    ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-slate-600'
-                                    : 'text-slate-700 dark:text-slate-200'
-                                }`}
-                              >
-                                <span className="font-mono">{m.value}</span>
-                                <span className="text-xs text-slate-400 dark:text-slate-500 ml-2 whitespace-nowrap">
-                                  {m.label}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  {formSupportsEmbedding && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                        向量维度{' '}
-                        <span className="text-slate-400 font-normal">
-                          (必须与 pgvector 表一致，当前为 1024)
-                        </span>
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={formEmbeddingDimensions}
-                        onChange={(e) => setFormEmbeddingDimensions(e.target.value)}
-                        placeholder="1024"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                          bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                          placeholder:text-slate-400 focus:outline-none focus:ring-2
-                          focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
-                      />
-                    </div>
-                  )}
-
-                  {/* Temperature */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                      Temperature{' '}
-                      <span className="text-slate-400 font-normal">(可选, 默认 0.2)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formTemperature}
-                      onChange={(e) => setFormTemperature(e.target.value)}
-                      placeholder="例如: 0.2, 0.7, 1"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-                        bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white
-                        placeholder:text-slate-400 focus:outline-none focus:ring-2
-                        focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
-                    />
-                  </div>
-                </div>
-
-                {/* Modal actions */}
-                <div className="flex gap-3 justify-end mt-6">
-                  <motion.button
-                    onClick={closeModal}
-                    disabled={saving}
-                    className="px-5 py-2.5 border border-slate-200 dark:border-slate-600
-                      text-slate-600 dark:text-slate-300 rounded-xl font-medium text-sm
-                      hover:bg-slate-50 dark:hover:bg-slate-700 transition-all
-                      disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    取消
-                  </motion.button>
-                  <motion.button
-                    onClick={handleSaveModal}
-                    disabled={saving}
-                    className="px-5 py-2.5 text-white rounded-xl font-semibold text-sm
-                      bg-gradient-to-r from-primary-500 to-primary-600
-                      shadow-lg shadow-primary-500/25
-                      hover:from-primary-600 hover:to-primary-700
-                      transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {saving ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        保存中...
-                      </span>
-                    ) : (
-                      '保存'
-                    )}
-                  </motion.button>
-                </div>
-              </motion.div>
-            </div>
-          </>
+          <ProviderFormModal
+            provider={editingProvider}
+            onClose={closeModal}
+            onSaved={(message) => {
+              showToast(message);
+              loadData();
+            }}
+            onError={(message) => showToast(message, 'error')}
+          />
         )}
       </AnimatePresence>
 
