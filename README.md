@@ -1,684 +1,115 @@
-<div align="center">
-
 # AI Interviewer
 
-**基于大语言模型的智能面试平台** —— 简历分析 · 模拟面试（文字 / 语音）· RAG 知识库 · 检索质量评估 · Token 成本统计
+一个本地部署的面试练习平台：传简历、出面试题、语音对练、生成报告，知识库里的资料可以检索着回答。
 
-[![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-green?logo=springboot)](https://spring.io/projects/spring-boot)
-[![Spring AI](https://img.shields.io/badge/Spring%20AI-2.0-6DB33F?logo=spring)](https://spring.io/projects/spring-ai)
-[![React](https://img.shields.io/badge/React-18.3-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?logo=gnu)](LICENSE)
+Spring Boot 4.1 / Java 25 / Spring AI 2.0 + React 18。全程 Docker 起依赖，除了大模型 API Key 不需要外部服务。
 
-</div>
+## 界面
 
----
-
-## 项目介绍
-
-AI Interviewer 是一个集简历分析、模拟面试（文字 + 语音）、RAG 知识库问答、知识库题库面试和多模型配置于一体的智能面试平台。系统基于大语言模型（LLM）、向量数据库、Redis Stream 异步任务和实时语音技术构建，除了完整的业务闭环外，还包含两块面向工程质量的**可量化能力**：
-
-- **RAG 检索质量评估**：一套可复现的离线评测框架，产出 Hit@K / MRR / 证据召回率 / 时延 P50-P95 / 拒答混淆矩阵，并在前端页面与仓库内报告中公开实测结论；
-- **Token 用量与成本统计**：在 LLM 调用链路上统一采集 token 消耗与耗时，落库后按 Provider / 模型 / 场景聚合，用于回答"一次问答花多少钱"。
-
-这两块的实测数据见 [效果与数据](#效果与数据)，完整评测报告见 [`RAG-EVALUATION.md`](RAG-EVALUATION.md)。
-
-## 效果展示
-
-以下截图全部取自**真实运行实例**：`docker compose up -d --build` 起全栈后由浏览器实拍（脚本见 [`frontend/scripts/capture-screenshots.mjs`](frontend/scripts/capture-screenshots.mjs)，基于 Playwright，可用 `pnpm run screenshots` 重跑）。截图里的数据是走真实接口产生的——简历解析、出题、向量化、RAG 问答、面试评估都是真实 LLM 调用，**前端没有 mock**。
-
-### 简历管理与分析
-
-| 简历列表 | 分析详情 |
-| --- | --- |
-| ![简历列表](screenshots/01-resume-list.png) | ![简历分析详情](screenshots/02-resume-detail.png) |
-
-上传后先由 Apache Tika 解析文本，再异步走 LLM 分析，产出总分、分项评分、优势与改进建议，并可导出 PDF。
-
-### 模拟面试与面试报告
-
-| 面试中心 | 面试报告 |
-| --- | --- |
-| ![面试中心](screenshots/03-interview-hub.png) | ![面试报告](screenshots/04-interview-report.png) |
-
-按简历 + 岗位方向出题，逐题作答后异步评估；报告里给出总分、逐题得分与参考答案。
-
-### 知识库、RAG 问答与题库面试
-
-| 知识库列表 | 知识库题库 |
-| --- | --- |
-| ![知识库列表](screenshots/05-knowledge-base.png) | ![知识库题库](screenshots/06-knowledge-base-questions.png) |
-
-| RAG 问答（SSE 流式） | |
-| --- | --- |
-| ![RAG 问答](screenshots/07-knowledge-base-chat.png) | 文档切分后经 Embedding 入 pgvector，问答走「向量 + 关键词」混合检索，回答通过 SSE 流式返回并附带引用来源。 |
-
-### 两个亮点模块
-
-| Token 用量与成本统计 | RAG 检索质量评估 |
-| --- | --- |
-| ![Token 用量](screenshots/08-token-usage.png) | ![RAG 评测](screenshots/09-rag-evaluation.png) |
-
-> **关于「未配置单价」**：Token 统计页在计价表为空时会显式提示「成本未知」，而不是把单价猜一个值填上去——**「不知道」和「免费」是两件事**。计价表在 `application.yml` 的 `app.ai.pricing.models` 里配置，模型匹配不到时成本字段返回 `null`。
-
-## 系统架构
-
-```mermaid
-flowchart LR
-  subgraph Client["浏览器"]
-    FE["React 18 + Vite<br/>TailwindCSS 4 + Recharts"]
-  end
-
-  subgraph App["Spring Boot 4.1 · Java 25 · 虚拟线程"]
-    API["REST API<br/>Controller → Service → Repository"]
-    SSE["SSE 流式问答"]
-    WS["WebSocket<br/>实时语音面试"]
-    RL["@RateLimit<br/>Global / IP / User"]
-    TAU["Token 采集<br/>CallAdvisor / StreamAdvisor"]
-  end
-
-  subgraph Async["异步任务（Redis Stream）"]
-    RS["简历分析 / 文档向量化<br/>题目生成 / 评估报告"]
-  end
-
-  PG[("PostgreSQL 16 + pgvector<br/>业务数据 + 向量检索")]
-  RD[("Redis 7<br/>缓存 / 会话 / Stream")]
-  S3[("S3 兼容存储<br/>RustFS（开发）/ MinIO（部署）")]
-  LLM["LLM Provider（OpenAI 兼容）<br/>百炼通义 / 百炼托管 DeepSeek、Kimi、GLM / LM Studio"]
-
-  FE --> API
-  FE --> SSE
-  FE --> WS
-  API --> RL --> PG
-  API --> RD
-  API --> S3
-  API --> LLM
-  API -.投递任务.-> RS
-  RS --> PG
-  RS --> LLM
-  TAU -.用量与成本.-> PG
-```
-
-## 技术栈
-
-### 后端技术
-
-| 技术                  | 版本  | 说明                          |
-| --------------------- | ----- | ----------------------------- |
-| Spring Boot           | 4.1.0 | 应用框架                      |
-| Java                  | 25    | 开发语言（虚拟线程）          |
-| Spring AI             | 2.0.0 | AI 集成框架、OpenAI 兼容模型接入 |
-| Spring AI Agent Utils | 0.10.0 | Skill 资源加载、Advisor 能力扩展 |
-| PostgreSQL + pgvector | 14+   | 关系数据库 + 向量存储（Compose 默认 PG16） |
-| Redis + Redisson      | 6+ / 4.0.0 | 缓存 + 消息队列（Stream） |
-| Apache Tika           | 2.9.2 | 文档解析                      |
-| iText 8               | 8.0.5 | PDF 导出                      |
-| MapStruct             | 1.6.3 | 对象映射                      |
-| SpringDoc OpenAPI     | 3.0.2 | API 接口文档                  |
-| Flyway                | -     | 数据库版本化迁移              |
-| DashScope SDK         | 2.22.7 | 语音识别/合成（Qwen3 ASR/TTS）|
-| AWS S3 SDK            | 2.29.51 | S3 兼容对象存储（MinIO/RustFS）|
-| WebSocket             | -     | 语音面试实时双向通信          |
-| Gradle                | 9.6.1 | 构建工具                      |
-
-### 前端技术
-
-| 技术              | 版本  | 说明           |
-| ----------------- | ----- | -------------- |
-| React             | 18.3  | UI 框架        |
-| TypeScript        | 5.6   | 开发语言       |
-| Vite              | 5.4   | 构建工具       |
-| Tailwind CSS      | 4.1   | 样式框架       |
-| React Router      | 7.11  | 路由管理       |
-| Framer Motion     | 12.23 | 动画库         |
-| Recharts          | 3.6   | 图表库         |
-| Lucide React      | 0.468 | 图标库         |
-| React Virtuoso    | 4.18  | RAG 聊天虚拟列表 |
-| pnpm              | 10.26 | 前端包管理器   |
-
-### 关键选型说明
-
-1. **数据存储为什么选 PostgreSQL + pgvector？** 业务数据与向量数据同库，少维护一个组件；pgvector 的 HNSW 索引足以支撑当前规模的检索，没有必要引入独立向量数据库。
-2. **为什么引入 Redis？** 一是替代 `ConcurrentHashMap` 承载面试会话缓存；二是用 Redis Stream 把简历分析、文档向量化、题目生成、评估报告这类耗时任务异步化，顺便解耦——这些任务后续换成其他语言实现也不影响主链路；三是承载 `@RateLimit` 的分布式限流计数。
-3. **为什么把 LLM 调用收窄成一个入口？** 所有 `ChatClient` 只在 `LlmProviderRegistry` 里创建，因此"给所有 LLM 调用加统计"只需要改一处（见 Token 用量与成本统计），15+ 个业务调用点零改动。
-4. **为什么构建工具选 Gradle？** 多模块拆分、自定义任务（如 `ragEvaluation`）和构建缓存用起来更顺手。
-
-## 功能特性
-
-### 简历管理模块
-
-- **多格式解析**：支持 PDF、DOCX、DOC、TXT 等多种简历格式。
-- **异步处理流**：基于 Redis Stream 实现异步简历分析，支持实时查看处理进度（待分析/分析中/已完成/失败）。
-- **稳定性保障**：内置分析失败自动重试机制（最多 3 次）与基于内容哈希的重复检测。
-- **分析报告导出**：支持将 AI 分析结果一键导出为结构化的 PDF 简历分析报告。
-
-### 模拟面试模块
-
-- **Skill 驱动出题**：内置 10 个面试方向（Java 后端、阿里/字节/腾讯专项、前端、Python、算法、系统设计、测开、AI Agent 开发），每个方向由 `SKILL.md` 定义考察范围、难度分布和参考知识库。
-- **历史题目去重**：出题时自动排除已有会话中问过的题目，避免重复考察。
-- **面试阶段时长联动**：总时长滑块拖动后，各阶段（自我介绍、技术考察、项目深挖、反问环节）按时比自动分配。
-- **智能追问流**：支持配置多轮智能追问（默认 1 条），模拟多轮问答场景。
-- **统一评估架构**：文字面试和语音面试共用同一套评估引擎（分批评估 + 结构化输出 + 二次汇总 + 降级兜底），评估结果可对比。
-- **报告一键导出**：支持异步生成并导出详细的 PDF 模拟面试评估报告。
-- **面试中心入口**：面试中心页整合文字面试和语音面试入口，支持继续面试和重新面试。
-
-### 语音面试模块
-
-实时语音对话面试，WebSocket + 千问3 语音模型（ASR/TTS/LLM 统一 API Key）：
-
-- **实时流式对话**：句子级并发 TTS，边生成边合成边播放，理想网络下首包延迟约 200ms（随网络与模型波动）
-- **服务端 VAD**：自动断句，实时字幕（含中间结果）
-- **回声防护 + 手动提交**：避免 AI 语音被误录入
-- **多轮上下文记忆 + 暂停/恢复**：超时自动暂停；长会话按「摘要 + 窗口 + 硬预算」压缩上下文
-- **Micrometer 埋点**：TTS/ASR 延迟、会话时长等指标
-
-> **已知问题**：端到端延迟偏高（服务端音频中转）、无耳机时回声泄漏、TTS 音色单一、弱网音频断续。
-
-### 知识库与 RAG 问答模块
-
-- **文档智能处理**：支持 PDF、DOCX、Markdown 等多种格式文档的自动上传、分块与异步向量化。
-- **RAG 检索增强**：集成 pgvector，通过查询改写、双路融合、相似度阈值和 TopK 策略提升 AI 问答的准确性与专业度。
-- **来源可追溯**：回答中标注实际送入 Prompt 的片段编号与来源文件，不编造缺失信息。
-- **流式响应交互**：基于 SSE（Server-Sent Events）技术实现打字机式流式响应。
-- **智能问答对话**：支持会话管理、置顶、多知识库关联、Markdown 展示和虚拟列表渲染。
-- **知识库运维**：支持分类管理、下载、重新向量化、搜索和统计信息展示。
-
-### 知识库题库与专项面试模块
-
-- **基于知识库生成题目**：从已向量化文档生成主问题、参考答案、关键点、评分标准和追问，并按方向与难度组织题库。
-- **异步生成与质量提示**：题目生成任务通过 Redis Stream 异步执行；生成不足时保留草稿，并展示实际追问数与目标追问数，避免静默丢失题目。
-- **完整题库维护**：支持题目搜索、筛选、分页、手动新增、编辑、删除，以及草稿、已启用、已归档状态的单题或批量管理。
-- **严格面试容量校验**：开始面试前按方向、难度、主问题数和每题追问数实时计算可用容量；追问数量是硬约束，容量不足的选项会直接禁用，后端同时进行兜底校验。
-- **专项面试与记录闭环**：从已启用题目中抽取主问题和追问，交卷后异步评估，支持方向/时间/完成状态筛选、表现趋势统计和 PDF 报告导出。
-
-### RAG 检索质量评估模块
-
-把"检索到底行不行"做成可复现、可展示的工程产物，而不是靠感觉：
-
-- **固定的评测集与环境**：40 条人工编写的样本（12 直接事实 / 8 同义改写 / 6 多轮上下文 / 6 跨段 / 8 知识库外），切分为调参集 dev 30 + 留出集 holdout 10；每次运行使用**独立的 PostgreSQL 逻辑库与 Redis database**，跑完销毁，不触碰开发数据。
-- **完整指标口径**：Hit@K、证据召回率（EvidenceRecall@K）、MRR、拒答混淆矩阵（P/R/F1/Accuracy）、分阶段时延 P50/P95，并逐条列出坏例及其原因。
-- **成本可控**：评测任务有 `rag-eval` tag 与 `RUN_RAG_EVAL` 双重开关，日常 `./gradlew :app:test` 不会触发付费调用。
-- **报告可复现**：报告绑定数据集 / 语料 / Prompt 的 SHA256、模型标识与完整配置快照，两次运行可比的前提一目了然；同时归档 JSON、Markdown 原文，以及前端只读页面 `/rag-eval`。
-
-### Token 用量与成本统计模块
-
-在 `LlmProviderRegistry` 的 3 个 builder 上挂 `CallAdvisor` / `StreamAdvisor`，业务代码零改动即可采集：
-
-- **采集内容**：Provider、模型、调用类型（对话/嵌入）、业务来源、输入/输出 token、耗时、成功与否。
-- **查询能力**：`GET /api/token-usage/stats` 支持时间窗与按模型/Provider/来源分组聚合；`GET /api/token-usage/pricing` 返回当前单价表。
-- **不编造数据**：未配置单价的模型，成本字段返回 `null` 而不是 `0`；汇总时用 `costComplete=false` 明确标注"金额不完整"。
-- **绝不影响主链路**：统计写入走独立 bean + `REQUIRES_NEW`，失败只记 `log.warn`，不污染用户的问答请求。
-
-<details>
-<summary><b>开发里程碑</b></summary>
-
-- [x] Docker 快速部署 + API 限流保护
-- [x] 问答助手 Markdown 展示优化 / 知识库下载 / 异步生成面试评估报告
-- [x] 前端性能优化（RAG 聊天虚拟列表）
-- [x] 模拟面试追问功能 + 历史题目去重
-- [x] 语音面试（Qwen3 实时语音模型）· 暂停恢复 · 手动提交 · 回声防护 · 流式输出 + 句子级并发 TTS
-- [x] Skill 驱动出题（多面试方向 + 参考知识库）
-- [x] 统一面试评估架构（文字/语音共用评估引擎）+ 面试中心页
-- [x] 多 LLM Provider 管理与默认模型切换
-- [x] 打通知识库题库与模拟面试（异步出题、容量校验、统一评估与记录）
-- [x] 可重复注解 API 限流（Global/IP/User 维度）
-- [x] RAG 检索质量评估报告（评测框架 + 归档基线 + 展示页面）
-- [x] LLM Token 用量与成本统计
-
-</details>
-
-## 效果与数据
-
-### RAG 检索质量（实测）
-
-取自归档的 6 组基线运行，数据来源与完整口径见 [`RAG-EVALUATION.md`](RAG-EVALUATION.md)。
-
-**分块大小对照**（其余配置固定，32 条库内样本）：
-
-| 配置 | 分块数（两篇语料） | Hit@K | 证据召回率 | MRR | 检索 P50 | 检索 P95 | 坏例 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Chunk 400 | 49 + 40 = 89 | 90.6% | 89.1% | **0.733** | 658 ms | 1148 ms | 14 |
-| Chunk 800（默认） | 24 + 20 = 44 | 87.5% | 82.8% | 0.696 | 665 ms | 1014 ms | 18 |
-| Chunk 1200 | 16 + 14 = 30 | **93.8%** | **90.6%** | 0.595 | 525 ms | 834 ms | 18 |
-
-> **结论**：块越大命中率越高，但 MRR 单调下降（`首个命中排名靠后` 的坏例从 2 涨到 6）——正确答案被更大的块"稀释"了。默认 800 取的是命中率与排序质量的折中。
-
-**已知最大短板**：6 组运行的拒答混淆矩阵完全一致，`tp=0 / fn=8 / fp=0 / tn=10`，**拒答召回率为 0** —— 知识库外的 8 条样本全部由模型凭自身知识作答。这是结构性缺口（缺少"证据不足即拒答"的判定），不是调参问题。
-
-> 评测集为 40 条人工编写的虚构语料，每个配置只跑一次；上述数字用于说明评测方法与定位问题，不作为调参定论。
-
-### 测试与覆盖率
-
-| 项目 | 规模 | 说明 |
+| 简历列表 | 简历详情 | 面试入口 |
 | --- | --- | --- |
-| 后端单测 / 集成测试 | **505 个用例**（71 个测试类，`@Nested` 展开后 114 个套件） | JUnit 5 + Mockito + AssertJ；15 个用例需要真实 Redis/PostgreSQL，缺少环境时跳过 |
-| 后端覆盖率（JaCoCo） | 行 **40.3%** / 指令 41.8% / 分支 30.8% | `./gradlew :app:test :app:jacocoTestReport`，报告在 `app/build/reports/jacoco/test/html/` |
-| 前端单测 | **43 个用例**（10 个测试文件） | Node 原生 `node:test`，`pnpm run test:unit` |
-| 前端 E2E | **5 个 Playwright 用例集** | 简历上传、知识库上传、上传代理、语音连接、语音面试 |
-| RAG 评测集 | **40 条样本 / 6 组归档基线** | 见上表与 [`RAG-EVALUATION.md`](RAG-EVALUATION.md) |
-| 代码风格 | Spotless（Java）+ Prettier + ESLint | `./gradlew :app:spotlessCheck`、`pnpm run lint && pnpm run format:check` |
+| ![](screenshots/01-resume-list.png) | ![](screenshots/02-resume-detail.png) | ![](screenshots/03-interview-hub.png) |
 
-覆盖率的分母包含尚未覆盖的模块（Skill 出题、语音面试的会话编排等），是最保守的实测值而非目标值。
+| 面试报告 | 知识库 | 题库面试 |
+| --- | --- | --- |
+| ![](screenshots/04-interview-report.png) | ![](screenshots/05-knowledge-base.png) | ![](screenshots/06-knowledge-base-questions.png) |
 
-## 项目结构
+| 知识库问答 | Token 用量 | RAG 评测 |
+| --- | --- | --- |
+| ![](screenshots/07-knowledge-base-chat.png) | ![](screenshots/08-token-usage.png) | ![](screenshots/09-rag-evaluation.png) |
 
-```
-AI-interviewer/
-├── app/                              # 后端应用
-│   ├── src/main/java/ai/interviewer/
-│   │   ├── App.java                  # 主启动类
-│   │   ├── common/                   # 通用基础能力
-│   │   │   ├── ai/                   # LLM Provider、结构化输出、Prompt 安全、Token 采集
-│   │   │   ├── annotation/           # @RateLimit 可重复限流注解
-│   │   │   ├── aspect/               # RateLimitAspect + Redis Lua 限流
-│   │   │   ├── async/                # Redis Stream 生产者/消费者模板
-│   │   │   ├── config/               # CORS、S3、OpenAPI、Jackson、定价等配置
-│   │   │   ├── evaluation/           # 文字/语音共用的统一评估引擎
-│   │   │   ├── exception/            # 业务异常与全局异常处理
-│   │   │   └── result/               # 统一响应 Result<T>
-│   │   ├── infrastructure/           # 基础设施
-│   │   │   ├── export/               # PDF 导出
-│   │   │   ├── file/                 # 文件解析、校验、清洗、S3 存储
-│   │   │   ├── mapper/               # MapStruct 映射器
-│   │   │   └── redis/                # RedisService、面试会话缓存
-│   │   └── modules/                  # 业务模块
-│   │       ├── interview/            # 模拟面试
-│   │       ├── knowledgebase/        # 知识库与 RAG 问答
-│   │       ├── llmprovider/          # 多 Provider 与语音配置
-│   │       ├── rageval/              # RAG 检索质量评估报告
-│   │       ├── resume/               # 简历
-│   │       ├── tokenusage/           # Token 用量与成本统计
-│   │       └── voiceinterview/       # 语音面试
-│   └── src/main/resources/
-│       ├── application.yml           # 应用配置
-│       ├── db/migration/             # Flyway 迁移脚本
-│       ├── prompts/                  # AI 提示词模板（StringTemplate）
-│       ├── rag-eval/baselines/       # 归档的评测基线与 Markdown 原报告
-│       ├── scripts/                  # Redis Lua 脚本
-│       ├── skills/                   # 面试 Skill 定义和参考题库
-│       └── voice-interview-opening.yml # 语音面试开场白配置
-│
-├── frontend/                         # 前端应用
-│   ├── src/
-│   │   ├── api/                      # API 客户端
-│   │   ├── components/               # 公共组件
-│   │   ├── hooks/                    # 业务 Hooks
-│   │   ├── pages/                    # 页面组件
-│   │   ├── types/                    # 类型定义
-│   │   └── utils/                    # 工具函数
-│   ├── e2e/                          # Playwright E2E
-│   ├── Dockerfile / nginx.conf
-│   └── vite.config.ts
-│
-├── docker/postgres/init.sql          # 数据库初始化（pgvector 扩展）
-├── docs/                             # ADR、架构与测试设计文档
-├── screenshots/                      # README 截图（pnpm run screenshots 生成）
-├── scripts/                          # 仓库维护脚本（commit-msg hook 自测）
-├── .githooks/                        # commit message 校验 hook（需 core.hooksPath 指向）
-├── .claude/rules/                    # 按目录划分的编码细则
-├── docker-compose.yml                # 完整部署：前端 + 后端 + PostgreSQL + Redis + MinIO
-├── docker-compose.dev.yml            # 本地开发依赖：PostgreSQL + Redis + RustFS
-├── RAG-EVALUATION.md                 # RAG 检索质量评估报告
-├── AGENTS.md / CLAUDE.md             # Agent 共享规则与工具入口
-├── .env.example                      # 环境变量示例
-└── README.md
-```
+## 做什么
+
+- **简历**：上传 PDF / Word / Markdown，Tika 抽文本，异步交给大模型拆成结构化的技能、项目、亮点；可以就地编辑，导出 PDF。
+- **文字面试**：按简历和目标岗位生成题目，一问一答，答完出评分报告（维度分数、参考答案、改进建议）。
+- **语音面试**：WebSocket 传音频，实时 ASR → 大模型 → 流式 TTS，中间有回声抑制、暂停续聊、逐句字幕。
+- **知识库**：上传文档切片入库，pgvector 检索（1024 维，余弦距离），带来源片段作答；也能从知识库里出题做专项练习。
+- **周边**：每次模型调用的 token 与花费统计、RAG 检索质量评测。
+
+## 技术选型
+
+| 层 | 选型 | 说明 |
+| --- | --- | --- |
+| 后端 | Spring Boot 4.1.0、Java 25、Gradle | 虚拟线程跑语音管线 |
+| AI | Spring AI 2.0.0、DashScope（百炼） | 聊天走 `ChatClient`，结构化输出统一收口 |
+| 数据 | PostgreSQL + pgvector、Flyway、JPA | 向量 1024 维 / COSINE；12 个迁移脚本，`ddl-auto: validate` |
+| 缓存与异步 | Redis、Redisson、Redis Stream | 限流（Lua 脚本）、任务队列、会话缓存 |
+| 存储与解析 | RustFS（S3 协议）、Apache Tika | 文件与内容识别 |
+| 前端 | React 18、TypeScript、Vite、Tailwind 4 | React Router 7，手写 SSE / WebSocket 客户端 |
+| 其它 | MapStruct、iText 8、SpringDoc、Playwright | 映射、导出、接口文档、E2E |
 
 ## 快速开始
 
-环境要求：
-
-| 依赖          | 版本 | 必需 | 说明                                     |
-| ------------- | ---- | ---- | ---------------------------------------- |
-| JDK           | 25   | 是   | 开发语言                                 |
-| Node.js       | 18+  | 是   | 前端构建                                 |
-| pnpm          | 10+  | 推荐 | 前端包管理器（项目 packageManager 指定 10.26）|
-| Docker        | -    | 推荐 | 一键启动依赖服务（PostgreSQL/Redis/RustFS）|
-
-> 如果不用 Docker，需要自行安装 PostgreSQL 14+（含 pgvector 扩展）、Redis 6+ 和 S3 兼容存储。
-
-### 1. 克隆项目
+需要 JDK 25、Node 20+、pnpm、Docker。
 
 ```bash
-# 仓库上传后替换为实际地址
-git clone <你的仓库地址>
-cd AI-interviewer
+git clone <repo> && cd AI-interviewer
 
-# 仓库自带 commit message 校验，但 git 不会自动读取 .githooks，需要指一次
+# 仓库自带 commit message 校验，但 git 不会自动读 .githooks，指一次
 git config core.hooksPath .githooks
-```
 
-### 2. 配置环境变量
-
-推荐复制 `.env.example` 为 `.env`，后端 `bootRun` 会自动读取根目录 `.env`。最少需要填写 `AI_BAILIAN_API_KEY`，用于 DashScope 文本模型、ASR 和 TTS：
-
-```bash
 cp .env.example .env
+# 编辑 .env：AI_BAILIAN_API_KEY 必填，APP_AI_CONFIG_ENCRYPTION_KEY 随便一串长随机
+# 模型等其他配置可在启动后的设置页里改
 
-# 编辑 .env
-# AI_BAILIAN_API_KEY=your_dashscope_api_key
-# APP_AI_CONFIG_ENCRYPTION_KEY=your_random_long_secret
-# AI_MODEL=qwen3.8-flash
+docker compose -f docker-compose.dev.yml up -d    # PostgreSQL / Redis / MinIO
+./gradlew :app:bootRun                            # 后端 :8080
+cd frontend && pnpm install && pnpm run dev       # 前端 :5173
 ```
 
-> 语音面试（ASR/TTS）与多 Provider 的密钥细节见 [`SETUP_API_KEYS.md`](SETUP_API_KEYS.md)。
+想直接跑整套（含 Nginx 反代）：`docker compose up -d --build`，然后访问 `http://localhost:8000`。
 
-如果你更习惯通过 shell 环境变量注入，也可以这样设置：
+环境变量说明见 [SETUP_API_KEYS.md](SETUP_API_KEYS.md)，起不来先看 [docs/troubleshooting.md](docs/troubleshooting.md)。
+
+## 目录
+
+```
+app/src/main/java/ai/interviewer/
+  common/          限流、AI 调用封装、异步模板、异常与统一响应
+  infrastructure/  文件存储、导出、Redis、S3、映射
+  modules/         业务模块，每个模块自带 Controller/Service/Repository
+    resume/ interview/ voiceinterview/ knowledgebase/ rageval/ tokenusage/ llmprovider/
+app/src/main/resources/
+  prompts/         StringTemplate 提示词模板
+  db/migration/    Flyway 迁移
+frontend/src/      pages / components / api / hooks / types
+docs/              ADR、架构说明、排错
+```
+
+## 开发
 
 ```bash
-# macOS / Linux（zsh）
-echo 'export AI_BAILIAN_API_KEY=your_api_key' >> ~/.zshrc
-source ~/.zshrc
-
-# Linux（bash）
-echo 'export AI_BAILIAN_API_KEY=your_api_key' >> ~/.bashrc
-source ~/.bashrc
+./gradlew :app:test --no-daemon        # 单元 + 集成测试
+./gradlew :app:spotlessCheck           # 代码格式
+cd frontend && pnpm run lint           # ESLint
+cd frontend && pnpm run test:unit      # 前端单测
+cd frontend && pnpm run build          # 类型检查 + 构建
 ```
 
-### 3. 启动依赖服务（可选）
+推送到 `main` 或提 PR 时 CI 会跑同一组检查：后端 spotless + 测试，前端 lint + 格式 + 单测 + 构建 + 两个 E2E。当前 560 个用例、128 个测试套件，其中 15 个需要真实 Redis / PostgreSQL，没有环境时跳过。
 
-项目提供了 `docker-compose.dev.yml`，可一键启动 PostgreSQL、Redis、RustFS（S3 兼容存储）三个依赖：
+RAG 检索质量的实测数据、分块与改写对照在 [RAG-EVALUATION.md](RAG-EVALUATION.md)，那是一次性快照，不是调参结论。
 
-```bash
-# 启动依赖服务
-docker compose -f docker-compose.dev.yml up -d
+## 近期改动
 
-# 停止依赖服务
-docker compose -f docker-compose.dev.yml down
+按时间倒序。每条都是一个独立 commit，决策写进 `docs/adr/`。
 
-# 停止并清除数据
-docker compose -f docker-compose.dev.yml down -v
-```
+- **把语音面试的 WebSocket handler 拆开**：从 1463 行拆到 1006 行，先后抽出 WAV 编码、出站消息、分句 TTS 管线、连接状态、暂停监控五个类，每抽一个补一组单测。
+- **删掉面试日程模块**：28 个文件、2600 行，没有测试，README 和 docs 里一次没提过，跟主线的简历/面试/知识库也没有数据往来。[ADR-0002](docs/adr/0002-drop-interview-schedule.md)
+- **数据层三个修**：会话列表原来在循环里逐条 count 消息（N+1）；会话缓存和评估任务在事务提交前就写了，回滚会留下幽灵会话；语音面试三张表从建库起没有索引。[V20261024](app/src/main/resources/db/migration/V20261024__add_voice_session_indexes.sql)
+- **三个安全问题**：上传校验里扩展名能顶替 MIME 类型（改个后缀就能进知识库）；限流身份读客户端自己写的 `X-User-Id`，换值即换桶；ASR 连通性测试对任意 host:port 建 TCP 连接，等于端口扫描器。
+- **删掉三个整体 @Disabled 的测试类**：866 行、约 40 个用例，从加 `@Disabled` 那天起没跑过，却一直算在测试统计里。[ADR-0001](docs/adr/0001-drop-disabled-voice-tests.md)
 
-启动后默认账号（取值来自 `.env`；若要改端口或密码，改 `.env` 后 `docker compose -f docker-compose.dev.yml up -d` 重建即可）：
+## 已知限制
 
-| 服务         | 地址             | 账号            | 密码            |
-| ------------ | ---------------- | --------------- | --------------- |
-| PostgreSQL   | `localhost:5432` | `postgres`      | `password`      |
-| Redis        | `localhost:6379` | -               | -               |
-| RustFS 控制台 | `localhost:9001` | `rustfsadmin`   | `rustfsadmin`   |
+- **没有用户体系**：单用户部署，没有权限隔离。38 处 `@RateLimit` 是按连接地址的限流，不是认证。
+- **RAG 不会拒答**：检索不到证据时仍然让模型硬答，评测里拒答召回率为 0，见 [RAG-EVALUATION.md](RAG-EVALUATION.md)。
+- **语音延迟偏高**：服务端中转音频，弱网下会断续。上 WebRTC 能改善，但那是另一个量级的改造。
+- **评测样本小**：40 条样本、单配置单次运行，只能用来定位问题。
+- **设置页的 YAML 编辑器是手写的**：`YamlTextEditor` 只认本项目自己写的那几个键，换缩进或加注释会丢内容。暂时不修，理由是它只服务于一个低频的兜底路径；触发条件记在 ADR 里。
 
-> **必须建 `.env`**：`docker-compose.dev.yml` 的 RustFS 需要 `RUSTFS_RPC_SECRET`，缺了会直接报错退出（`Set RUSTFS_RPC_SECRET in .env`）。`.env.example` 已提供这三项 `RUSTFS_*` 开发默认值，照第 2 步复制即可。
->
-> **注意**：应用启动时会自动检查并创建 `ai-interviewer` Bucket（`app.storage.auto-create-bucket` 默认开启），无需手动建桶，RustFS 控制台只用来查看和排查。使用 `docker-compose.dev.yml` + `:app:bootRun` 时，请确保 `.env` 中的 `APP_STORAGE_ACCESS_KEY` / `APP_STORAGE_SECRET_KEY` 与 RustFS 账号一致，例如都设为 `rustfsadmin`。如果本地已有 MinIO 或其他 S3 兼容存储，也可以直接使用，在 `.env` 中修改 `APP_STORAGE_*` 配置即可。
+## 来源与许可
 
-### 4. 启动应用
+基于 [Snailclimb/interview-guide](https://github.com/Snailclimb/interview-guide) 二次开发，原作者 Snailclimb 允许个人使用。在此基础上做了品牌与工程重构、RAG 评测、Token 成本统计。
 
-**后端：**
-
-```bash
-./gradlew :app:bootRun
-```
-
-后端服务启动于 `http://localhost:8080`，接口文档 `http://localhost:8080/swagger-ui.html`，健康检查 `http://localhost:8080/actuator/health`。
-
-**前端：**
-
-```bash
-cd frontend
-corepack enable
-pnpm install
-pnpm dev
-```
-
-前端服务启动于 `http://localhost:5173`
-
-## Docker 一键部署
-
-本项目提供了完整的 Docker 支持，可以一键启动所有服务（前后端、数据库、中间件）。
-
-Docker Compose 编排了 6 个服务：PostgreSQL（pgvector）、Redis、MinIO（S3 兼容存储）、MinIO Bucket 初始化、Spring Boot 后端、React 前端（Nginx）。数据通过 Docker 命名卷持久化，`docker compose down` 不会丢失数据。
-
-这套编排**不绑定任何云厂商或托管平台**：本机、内网服务器、云主机上只要有 Docker 就能跑，镜像全部来自公开仓库。需要从外部访问时，暴露 `80`（前端）与 `8080`（后端 API）端口，或按需在前面加一层反向代理即可。
-
-### 1. 前置准备
-
-- 安装 [Docker](https://www.docker.com/products/docker-desktop/) 和 Docker Compose
-- 申请阿里云百炼 API Key（用于 AI 对话功能，申请地址：<https://bailian.console.aliyun.com/>）
-
-### 2. 快速启动
-
-在项目根目录下执行：
-
-```bash
-# 1. 复制环境变量配置文件
-cp .env.example .env
-
-# 2. 编辑 .env 文件，填入 AI 配置
-# 必填：AI_BAILIAN_API_KEY=your_key_here
-# 必填：APP_AI_CONFIG_ENCRYPTION_KEY=your_random_long_secret
-# 可选：AI_MODEL=qwen3.8-flash   # 默认值为 qwen3.8-flash
-# 也可以在设置页维护百炼、Kimi、DeepSeek、GLM、LM Studio 等 Provider
-# （Kimi / DeepSeek / GLM 走百炼托管，共用同一把 AI_BAILIAN_API_KEY）
-
-# 3. 构建并启动所有服务
-docker compose up -d --build
-```
-
-> **不要跳过第 1、2 步**：`.env` 缺失时 `docker compose` 只会打印一句 `variable is not set. Defaulting to a blank string.` 警告，容器照样起来，但**第一次 AI 调用才会失败**，排查成本很高。启动后若不放心，可以先跑一遍 `curl http://localhost:8080/actuator/health` 确认后端起来了。
->
-> `.env.example` 中的 PostgreSQL、Redis、MinIO 配置已与 `docker-compose.yml` 对齐（数据库用户 `postgres` / 密码 `password`，MinIO `minioadmin` / `minioadmin`）。若你曾修改过库密码或对象存储密钥，请同步更新 `.env`，必要时重建 Postgres 卷以免旧数据与密码不一致。
->
-> **仅启动依赖服务**：如果只想本地开发调试（用 `./gradlew :app:bootRun` 启动后端），可以只启动基础设施：`docker compose up -d postgres redis minio createbuckets`。
-
-### 3. 服务访问
-
-| 服务             | 地址                                           | 默认账号     | 默认密码     | 说明                   |
-| ---------------- | ---------------------------------------------- | ------------ | ------------ | ---------------------- |
-| **前端应用**     | [http://localhost](http://localhost)           | -            | -            | 用户访问入口           |
-| **后端 API**     | [http://localhost:8080](http://localhost:8080) | -            | -            | RESTful API            |
-| **接口文档**     | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) | - | - | SpringDoc/Swagger UI |
-| **健康检查**     | [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) | - | - | Actuator |
-| **MinIO 控制台** | [http://localhost:9001](http://localhost:9001) | `minioadmin` | `minioadmin` | 对象存储管理           |
-| **MinIO API**    | `localhost:9000`                               | -            | -            | S3 兼容接口            |
-| **PostgreSQL**   | `localhost:5432`                               | `postgres`   | `password`   | 数据库 (包含 pgvector) |
-| **Redis**        | `localhost:6379`                               | -            | -            | 缓存与消息队列         |
-
-> 宿主机端口可用 `FRONTEND_PORT` / `BACKEND_PORT` 覆盖（见 `.env.example`）。例如宿主机 `80` 已被 IIS 或其他服务占用时，在 `.env` 里设 `FRONTEND_PORT=8000`，前端就改到 [http://localhost:8000](http://localhost:8000)，上面表格里的地址依次顺延。
->
-> **改了 `FRONTEND_PORT` 记得同步 `CORS_ALLOWED_ORIGINS`**：语音面试的 WebSocket 会校验浏览器 Origin（[WebSocketConfig.java](app/src/main/java/ai/interviewer/modules/voiceinterview/config/WebSocketConfig.java)），白名单里没有新地址时语音面试会连不上。前端页面之间走 nginx 同源代理（`/api/`、`/ws/`），所以只改前端端口时 REST 接口不受影响，受影响的只有 WebSocket 的 Origin 校验。
-
-### 4. 常用运维命令
-
-```bash
-# 查看服务状态
-docker compose ps
-
-# 查看后端日志
-docker compose logs -f app
-
-# 拉取新代码后重新构建部署
-docker compose up -d --build
-
-# 停止并移除所有服务（数据保留在 Docker 卷中）
-docker compose down
-
-# 停止服务并清除数据卷（慎用，会删除数据库和文件）
-docker compose down -v
-
-# 清理无用镜像（构建产生的中间层）
-docker image prune -f
-```
-
-## 测试
-
-```bash
-# 后端：单元测试 + 集成测试（自动排除需要付费调用的 RAG 评测）
-./gradlew :app:test --no-daemon
-
-# 后端：单测覆盖率报告
-./gradlew :app:test :app:jacocoTestReport
-
-# 代码风格
-./gradlew :app:spotlessCheck
-
-# 前端：单测 / E2E / 风格
-cd frontend
-pnpm run test:unit
-pnpm run test:e2e
-pnpm run lint && pnpm run format:check
-```
-
-### RAG 检索质量评测（会产生真实 LLM 调用）
-
-评测任务有 `rag-eval` tag 与 `RUN_RAG_EVAL=true` 双重开关，日常测试不会触发。运行前需启动本地依赖并配置可用的 Embedding / Chat Provider：
-
-```bash
-docker compose -f docker-compose.dev.yml up -d
-
-# 基线（Chunk 800 + 关闭改写）
-RUN_RAG_EVAL=true ./gradlew :app:ragEvaluation --no-daemon
-
-# 分块对照
-RUN_RAG_EVAL=true APP_AI_RAG_VECTORIZATION_CHUNK_SIZE=400  ./gradlew :app:ragEvaluation --no-daemon
-RUN_RAG_EVAL=true APP_AI_RAG_VECTORIZATION_CHUNK_SIZE=1200 ./gradlew :app:ragEvaluation --no-daemon
-
-# 改写 / 双路融合对照
-RUN_RAG_EVAL=true APP_AI_RAG_REWRITE_ENABLED=true ./gradlew :app:ragEvaluation --no-daemon
-RUN_RAG_EVAL=true APP_AI_RAG_REWRITE_ENABLED=true APP_AI_RAG_MERGE_ORIGINAL_QUERY=true ./gradlew :app:ragEvaluation --no-daemon
-```
-
-报告输出到 `app/build/reports/rag-eval/<run-id>.json|.md`；人工复核后归档到 `app/src/main/resources/rag-eval/baselines/`，即可在 `/rag-eval` 页面查看。
-
-## 使用场景
-
-| 用户角色        | 使用场景                               |
-| --------------- | -------------------------------------- |
-| **求职者**      | 上传简历获取分析建议，进行模拟面试练习 |
-| **HR/招聘人员** | 批量分析简历，评估候选人能力           |
-| **培训机构**    | 提供面试培训服务，管理知识库资源       |
-
-## 常见问题
-
-### Q: 数据库表创建失败/数据丢失
-
-本地开发首先检查 JPA 的 `ddl-auto` 配置。`ddl-auto` 模式对比：
-
-| 模式     | 行为                            | 适用场景      | 数据保留 |
-| -------- | ------------------------------- | ------------- | -------- |
-| update   | 表不存在自动创建，存在则尝试增量更新 | 早期开发或临时实验，当前项目不推荐 | ✅ 保留 |
-| create   | 无条件删除并重建所有表          | 仅首次建表时使用 | ❌ 删除 |
-| **validate** | 只验证，不修改                  | **当前项目默认推荐，建表和变更交给 Flyway** | ✅ 保留 |
-| none     | 什么都不做                      | 生产环境      | ✅ 保留 |
-
-**推荐配置（已默认）**：
-
-```yaml
-jpa:
-  hibernate:
-    ddl-auto: validate  # 只校验 schema，建表和变更交给 Flyway
-```
-
-⚠️ **注意**：避免使用 `create` 模式，否则每次重启都会删除所有数据！
-
-### Q: 数据库迁移需要手动执行脚本吗？
-
-不需要。数据库 schema 已接入 Flyway，后端应用启动时会自动执行 `app/src/main/resources/db/migration/` 下的迁移，并记录到 `flyway_schema_history`。Hibernate `ddl-auto` 只做 `validate` 校验。测试环境使用 H2，默认关闭 Flyway。
-
-### Q: 知识库向量化失败
-
-`vector_store` 表已由 Flyway 创建，Spring AI 不再自动建表：
-
-```yaml
-spring:
-  ai:
-    vectorstore:
-      pgvector:
-        initialize-schema: false
-```
-
-建议保持为 `false`，避免应用启动时绕过 Flyway 修改数据库 schema。
-
-### Q: 启动时报 `Connection to localhost:5432 refused` 怎么办？
-
-这通常不是 Flyway 脚本错误，而是后端从宿主机访问不到 PostgreSQL。先确认依赖容器已启动：
-
-```bash
-docker compose -f docker-compose.dev.yml up -d
-docker ps --format '{{.Names}} {{.Ports}}'
-```
-
-`ai-interviewer-postgres` 必须显示 `0.0.0.0:5432->5432/tcp`，`ai-interviewer-redis` 必须显示 `0.0.0.0:6379->6379/tcp`。如果只显示 `5432/tcp` 或 `6379/tcp`，说明旧容器没有应用端口映射配置，重建容器即可：
-
-```bash
-docker compose -f docker-compose.dev.yml up -d --force-recreate postgres redis
-```
-
-如果你的本机 `5432` 或 `6379` 已被其他项目占用，可以修改 `.env` 中的 `POSTGRES_PORT` / `REDIS_PORT`，并同步调整 `docker-compose.dev.yml` 里的端口映射，确保应用配置和容器发布端口一致。
-
-### Q: 简历分析失败
-
-检查一下阿里云 DashScope API KEY 是否配置正确（申请地址：<https://bailian.console.aliyun.com/>）。
-
-### Q: 设置页新增/切换模型后不生效？
-
-运行时 Provider 配置默认写到 `~/.ai-interviewer/llm-providers.yml` 和 `~/.ai-interviewer/llm-providers.env`。可以在设置页点击测试连接，或调用 `/api/llm-provider/reload` 重新加载配置。Docker 部署时如果希望配置持久化，建议为该目录挂载卷。
-
-### Q: 简历分析一直显示"分析中"？
-
-检查 Redis 连接和 Stream Consumer 是否正常运行。查看后端日志确认是否有错误。
-
-### Q: 语音面试提示"连接已断开，请刷新页面重试"？
-
-先在浏览器开发者工具的 Network → WS 中检查 `/ws/voice-interview/{sessionId}` 的连接，正常握手状态为 `101`。语音连接与 REST API 使用同一服务入口，HTTPS 页面使用 `wss://`；不要把远程部署的连接地址写成 `ws://localhost:8080`，这里的 localhost 指的是访问者的电脑。
-
-- 本地开发：Vite 已配置 `/ws` 代理，与 `/api` 共用 `VITE_API_PROXY_TARGET`，默认后端为 `http://localhost:8080`。修改代理配置后重启前端。
-- Docker / Nginx：使用更新后的 `frontend/nginx.conf`，重新构建前端镜像。自行配置反向代理时，需要转发 `/ws/`，并保留 `Upgrade`、`Connection` 和包含外部端口的 `Host` 请求头；长连接需配置足够的读取超时。
-- 握手返回 `403`：检查 `CORS_ALLOWED_ORIGINS` 是否包含实际前端来源（协议、域名、端口均须匹配），尤其是 HTTPS 反向代理或显式配置 `VITE_API_BASE_URL` 的跨域部署。不要通过允许所有来源来绕过检查。
-- 握手成功但语音识别未就绪：检查后端与 DashScope 的握手、API Key 和模型配置。当前设置页的 ASR 连接测试仅检查 TCP 端口连通性，通过不代表语音鉴权和识别已成功。
-
-### Q: 语音面试无法识别或没有声音？
-
-语音面试的 ASR/TTS 默认也使用 `AI_BAILIAN_API_KEY`。请检查浏览器麦克风权限、后端日志中的 DashScope WebSocket 连接状态，以及设置页里的 ASR/TTS 测试结果。无耳机时可能触发回声录入，建议先使用手动提交模式或佩戴耳机测试。
-
-### Q: PDF 导出失败或中文显示异常？
-
-项目已内置中文字体，支持跨平台导出。如遇到问题，请检查：
-
-- 字体文件是否存在：`app/src/main/resources/fonts/ZhuqueFangsong-Regular.ttf`
-- 检查日志中的字体加载信息
-- 确认 iText 依赖是否正确
-
-### Q: Windows PowerShell 下后端日志中文乱码？
-
-**原因简述**：后端与 Logback 按 **UTF-8** 输出日志；中文 Windows 下控制台默认多为 **GBK（代码页 936）**，且 PowerShell 的 `$OutputEncoding`、控制台编码若未统一为 UTF-8，显示时就会把同一串字节解释错，出现乱码。
-
-**本项目已做的配置**（一般无需再改）：根目录 `gradle.properties`（Gradle 进程 UTF-8）、`app/src/main/resources/logback-spring.xml`（控制台日志 UTF-8）、`app/build.gradle` 中 `bootRun` 的 JVM 参数（含 `file.encoding` / `stdout.encoding` / `stderr.encoding`）。
-
-**仍乱码时（PowerShell 侧）**：在启动 `.\gradlew.bat :app:bootRun` 的同一终端先执行下面一段；或写入 **PowerShell 配置文件**（`$PROFILE`）以便每次自动生效：
-
-```powershell
-chcp 65001 | Out-Null
-[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-[Console]::InputEncoding  = [System.Text.UTF8Encoding]::new($false)
-$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-```
-
-新建或编辑配置文件：`if (!(Test-Path $PROFILE)) { New-Item -Path $PROFILE -ItemType File -Force }`，再 `notepad $PROFILE` 将上述内容粘贴保存；新开终端后生效，或执行 `. $PROFILE` 立即加载。若提示脚本无法执行，可执行一次：`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`。
-
-### Q: 使用 IntelliJ IDEA 的 Docker 调试方式启动后端报 `mounts denied`？
-
-在 macOS 上遇到 `The path /Applications/IntelliJ IDEA.app/Contents/lib is not shared from the host` 时，请在 Docker Desktop 的 `Settings -> Resources -> File Sharing` 中加入 `/Applications/IntelliJ IDEA.app/Contents/lib`（或整个 `/Applications/IntelliJ IDEA.app`）以及当前项目目录，然后重启 Docker/IDEA 后再运行。普通 `./gradlew :app:bootRun` 和 `docker compose` 启动不需要这个额外共享路径。
-
-## 已知限制与后续计划
-
-**限制**
-
-- **不做多租户授权**：项目尚无完整的用户级权限隔离，只适合可信的私有部署；知识库来源追溯能力不等于多租户授权能力。
-- **RAG 拒答能力缺失**：检索无有效证据时仍会生成回答（评测中拒答召回率为 0），见 [RAG-EVALUATION.md](RAG-EVALUATION.md)。
-- **语音面试延迟偏高**：服务端音频中转导致端到端延迟不理想，弱网下音频断续。
-- **评测样本规模有限**：RAG 评测集 40 条，单配置单次运行，结论用于定位问题而非调参定论。
-
-**后续计划**
-
-- 语音面试接入 WebRTC 降低端到端延迟，并支持更多 TTS 音色
-- 为检索链路增加"最小相似度阈值 + 无命中即拒答"，并在评测集上复测拒答召回率
-- 补齐 Skill 出题链路的单元测试，提升覆盖率
-
-## 致谢与许可
-
-本项目基于开源项目 [Snailclimb/interview-guide](https://github.com/Snailclimb/interview-guide)（作者 Snailclimb 允许个人使用）二次开发，在其基础上完成了品牌与工程标识重构、代码风格统一、RAG 检索质量评估与 Token 成本统计等改造，向原作者致谢。
-
-本项目采用 [AGPL-3.0](LICENSE) 许可：只要通过网络提供服务，就必须向用户公开修改后的源码。
+本项目采用 [AGPL-3.0](LICENSE)：通过网络提供服务就必须公开修改后的源码。
