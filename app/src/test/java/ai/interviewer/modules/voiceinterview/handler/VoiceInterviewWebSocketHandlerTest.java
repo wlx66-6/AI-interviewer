@@ -23,13 +23,11 @@ import org.springframework.web.socket.WebSocketSession;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -168,14 +166,8 @@ class VoiceInterviewWebSocketHandlerTest {
       boolean processing) throws Exception {
     fieldMap("sessions").put(sessionId, session);
 
-    Class<?> stateType = Class.forName(
-        VoiceInterviewWebSocketHandler.class.getName() + "$SessionState");
-    Constructor<?> constructor = stateType.getDeclaredConstructor();
-    constructor.setAccessible(true);
-    Object state = constructor.newInstance();
-    Method isProcessing = stateType.getDeclaredMethod("isProcessing");
-    isProcessing.setAccessible(true);
-    ((AtomicBoolean) isProcessing.invoke(state)).set(processing);
+    SessionState state = new SessionState();
+    state.isProcessing().set(processing);
     fieldMap("sessionStates").put(sessionId, state);
   }
 
