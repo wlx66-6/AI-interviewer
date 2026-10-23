@@ -6,6 +6,7 @@ import ai.interviewer.common.config.LlmProviderProperties;
 import ai.interviewer.common.config.LlmProviderProperties.ProviderConfig;
 import ai.interviewer.common.exception.BusinessException;
 import ai.interviewer.common.exception.ErrorCode;
+import ai.interviewer.infrastructure.net.OutboundAddressPolicy;
 import ai.interviewer.modules.llmprovider.dto.AsrConfigDTO;
 import ai.interviewer.modules.llmprovider.dto.AsrConfigRequest;
 import ai.interviewer.modules.llmprovider.dto.CreateProviderRequest;
@@ -36,6 +37,8 @@ import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -285,13 +288,14 @@ public class LlmProviderConfigService {
     try {
       VoiceInterviewProperties.AsrConfig asr = voiceProperties.getQwen().getAsr();
       try {
-        java.net.URI wsUri = java.net.URI.create(asr.getUrl());
+        URI wsUri = URI.create(asr.getUrl());
         String host = wsUri.getHost();
-        int port = wsUri.getPort() > 0 ? wsUri.getPort() : (wsUri.getScheme().equals("wss") ? 443 : 80);
-        java.net.InetSocketAddress address = new java.net.InetSocketAddress(host, port);
-        java.net.Socket socket = new java.net.Socket();
-        socket.connect(address, 5000);
-        socket.close();
+        // 先校验再连接，并且连校验时解析到的地址，避免校验完再解析一次被换掉
+        InetAddress target = OutboundAddressPolicy.requirePublicTarget(wsUri)[0];
+        int port = wsUri.getPort() > 0 ? wsUri.getPort() : ("wss".equalsIgnoreCase(wsUri.getScheme()) ? 443 : 80);
+        try (Socket socket = new Socket()) {
+          socket.connect(new InetSocketAddress(target, port), 5000);
+        }
         return ProviderTestResult.builder()
             .success(true)
             .message("ASR 服务网络端口可达: " + host + "；尚未验证 API Key、模型权限及语音识别能力")
@@ -489,7 +493,10 @@ public class LlmProviderConfigService {
     try {
       VoiceInterviewProperties.AsrConfig asr = voiceProperties.getQwen().getAsr();
       VoiceInterviewProperties.QwenTtsConfig tts = voiceProperties.getQwen().getTts();
-      if (request.url() != null) asr.setUrl(request.url());
+      if (request.url() != null) {
+        OutboundAddressPolicy.requirePublicTarget(request.url());
+        asr.setUrl(request.url());
+      }
       if (request.model() != null) asr.setModel(request.model());
       if (request.language() != null) asr.setLanguage(request.language());
       if (request.format() != null) asr.setFormat(request.format());
