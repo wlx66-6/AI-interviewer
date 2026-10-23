@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 permissions:
   contents: read
@@ -31,6 +31,9 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: gradle
+
+      - name: Check code formatting
+        run: ./gradlew :app:spotlessCheck --no-daemon
 
       - name: Run backend tests
         run: ./gradlew :app:test --no-daemon
@@ -61,6 +64,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Lint frontend
+        run: pnpm run lint
+
+      - name: Check frontend formatting
+        run: pnpm run format:check
 
       - name: Run frontend tests
         run: |
